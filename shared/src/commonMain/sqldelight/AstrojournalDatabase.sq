@@ -1,8 +1,0 @@
-CREATE TABLE Observation (
-    id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-    title TEXT NOT NULL,
-    description TEXT,
-    date TEXT NOT NULL,
-    location TEXT,
-    createdAt TEXT NOT NULL
-);
