@@ -1,23 +1,33 @@
 package com.app.shared.data.db
 
-import db.Collectible
-import db.CollectibleQueries
+import com.astrojournal.shared.data.db.Collectible
+import com.astrojournal.shared.data.db.CollectibleQueries
 
 class CollectibleRepository(
     private val queries: CollectibleQueries
 ) {
 
     fun insertCollectible(
-        id: String,
-        eventId: String,
+        eventId: Long,                 // ← CAMBIO: antes String
         observationDate: String,
-        notes: String?
+        notes: String?,
+        observed: Int
     ) {
         queries.insertCollectible(
-            id,
-            eventId,
-            observationDate,
-            notes
+            eventId = eventId,
+            observationDate = observationDate,
+            notes = notes,
+            observed = observed.toLong()
+        )
+    }
+
+    fun updateObserved(
+        id: Long,                      // ← CAMBIO: antes String
+        observed: Int
+    ) {
+        queries.updateObserved(
+            observed = observed.toLong(),
+            id = id
         )
     }
 
@@ -25,15 +35,11 @@ class CollectibleRepository(
         return queries.selectAll().executeAsList()
     }
 
-    fun getById(id: String): Collectible? {
+    fun getById(id: Long): Collectible? {   // ← CAMBIO: antes String
         return queries.selectById(id).executeAsOneOrNull()
     }
 
-    fun deleteById(id: String) {
+    fun deleteById(id: Long) {              // ← CAMBIO: antes String
         queries.deleteById(id)
-    }
-
-    fun deleteAll() {
-        queries.deleteAll()
     }
 }

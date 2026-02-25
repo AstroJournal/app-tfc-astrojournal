@@ -8,6 +8,7 @@ android {
     namespace = "com.app.astrojournal"
     compileSdk = 36
 
+
     defaultConfig {
         applicationId = "com.app.astrojournal"
         minSdk = 26
@@ -37,6 +38,10 @@ android {
     buildFeatures {
         compose = true
     }
+    composeOptions {
+        kotlinCompilerExtensionVersion = "1.5.3"
+    }
+
 }
 
 dependencies {
@@ -53,6 +58,8 @@ dependencies {
     implementation(libs.androidx.compose.material3)
     implementation(libs.coil.compose)
     implementation(libs.androidx.compose.material.icons.extended)
+    implementation(libs.androidx.material3)
+    implementation(libs.androidx.navigation.compose)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

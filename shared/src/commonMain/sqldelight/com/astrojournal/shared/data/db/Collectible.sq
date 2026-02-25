@@ -1,0 +1,28 @@
+CREATE TABLE collectible (
+    id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    eventId INTEGER NOT NULL,   -- ← CAMBIO IMPORTANTE
+    observationDate TEXT NOT NULL,
+    notes TEXT,
+    observed INTEGER NOT NULL DEFAULT 0
+);
+
+selectAll:
+SELECT * FROM collectible;
+
+selectById:
+SELECT * FROM collectible WHERE id = ?;
+
+insertCollectible:
+INSERT INTO collectible(eventId, observationDate, notes, observed)
+VALUES (?, ?, ?, ?);
+
+updateObserved:
+UPDATE collectible
+SET observed = :observed
+WHERE id = :id;
+
+deleteById:
+DELETE FROM collectible WHERE id = ?;
+
+deleteAll:
+DELETE FROM collectible;

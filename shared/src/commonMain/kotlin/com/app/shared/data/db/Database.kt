@@ -1,7 +1,6 @@
 package com.astrojournal.shared.data.db
 
-import com.astrojournal.shared.data.db.DatabaseDriverFactory
-import db.AstrojournalDatabase
+
 
 /**
  * Wrapper class for the SqlDelight database.

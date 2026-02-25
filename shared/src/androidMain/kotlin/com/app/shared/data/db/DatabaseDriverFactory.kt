@@ -3,7 +3,6 @@ package com.astrojournal.shared.data.db
 import android.content.Context
 import app.cash.sqldelight.db.SqlDriver
 import app.cash.sqldelight.driver.android.AndroidSqliteDriver
-import db.AstrojournalDatabase
 
 /**
  * Android implementation of DatabaseDriverFactory.

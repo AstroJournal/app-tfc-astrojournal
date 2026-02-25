@@ -6,16 +6,20 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import java.time.Instant
-import java.util.UUID
 import com.app.shared.data.db.CollectibleRepository
-import db.Collectible
+import com.astrojournal.shared.data.db.Collectible
 
 class EventDetailViewModel(
     private val repo: CollectibleRepository
 ) : ViewModel() {
 
-    var collectibles by mutableStateOf(emptyList<Collectible>())
+    //List of collectibles associated to events
+    var collectibles by mutableStateOf<List<Collectible>>(emptyList())
+        private set
+    var isEventObserved by mutableStateOf(false)
         private set
 
     init {
@@ -24,29 +28,38 @@ class EventDetailViewModel(
 
     private fun loadCollectibles() {
         viewModelScope.launch {
-            collectibles = repo.getAll()
+            val result = withContext(Dispatchers.IO) {
+                repo.getAll()
+            }
+            collectibles = result
         }
     }
 
-    fun eventoObservado(eventId: String, notes: String) {
+    fun addNote(eventId: Long, note: String) {     // ← CAMBIO: antes String
+        if (note.isBlank()) return
         viewModelScope.launch {
-            val id = UUID.randomUUID().toString()
-            val date = Instant.now().toString()
-
-            repo.insertCollectible(
-                id = id,
-                eventId = eventId,
-                observationDate = date,
-                notes = notes
-            )
-
-            // 🔥 Recargar la lista después de guardar
+            withContext(Dispatchers.IO) {
+                repo.insertCollectible(
+                    eventId = eventId,
+                    observationDate = Instant.now().toString(),
+                    notes = note,
+                    observed = 0
+                )
+            }
             loadCollectibles()
         }
+    }
 
+    fun deleteNote(id: Long) {                     // ← CAMBIO: antes String
+        viewModelScope.launch {
+            withContext(Dispatchers.IO) {
+                repo.deleteById(id)
+            }
+            loadCollectibles()
+        }
     }
-    fun borrarNota(id: String) {
-        repo.deleteById(id)
-        loadCollectibles() // refrescar lista
+
+    fun markObserved(observed: Boolean) {
+        isEventObserved = observed
+        }
     }
-}

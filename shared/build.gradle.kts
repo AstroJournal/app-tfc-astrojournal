@@ -86,7 +86,7 @@ kotlin {
 sqldelight {
     databases {
         create("AstrojournalDatabase") {
-            packageName.set("db")
+            packageName.set("com.astrojournal.shared.data.db")
             verifyMigrations.set(false)
         }
     }
