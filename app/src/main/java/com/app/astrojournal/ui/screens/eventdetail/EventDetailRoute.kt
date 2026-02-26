@@ -1,10 +1,11 @@
-package com.app.astrojournal.eventdetail
+package com.app.astrojournal.ui.screens.eventdetail
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import com.app.astrojournal.ui.screens.EventDetailScreen
 import com.app.astrojournal.di.AppModule
-import com.app.astrojournal.model.EventData
+import com.app.astrojournal.data.model.EventData
+import com.app.astrojournal.ui.viewmodels.EventDetailViewModel
 
 @Composable
 fun EventDetailRoute(eventId: Long) {

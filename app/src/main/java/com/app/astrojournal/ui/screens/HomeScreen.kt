@@ -28,11 +28,13 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import com.app.astrojournal.ui.components.AstroBottomNavigation
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.unit.sp
+import java.util.Locale
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Brush
-import com.app.astrojournal.viewmodel.HomeViewModel
-import com.app.astrojournal.viewmodel.UiState
+import com.app.astrojournal.ui.viewmodels.HomeViewModel
+import com.app.astrojournal.ui.viewmodels.UiState
 import com.app.astrojournal.R
 import com.app.astrojournal.ui.screens.ComingWeek
 import androidx.compose.ui.zIndex
@@ -50,19 +52,31 @@ val Indigo200 = Color(0xFFC7D2FE)
 val Indigo300 = Color(0xFFA5B4FC)
 val Indigo500 = Color(0xFF6366F1)
 val White10 = Color.White.copy(alpha = 0.1f)
+private val localeEnglish = Locale.ENGLISH
+
 
 
 @Composable
-fun HomeScreen(viewModel: HomeViewModel) {
+fun HomeScreen(
+    viewModel: HomeViewModel,
+    currentScreen: String = "home",
+    onNavigate: (String) -> Unit = {}
+) {
     val moonData = viewModel.moonData.collectAsState()
     val uiState = viewModel.uiState.collectAsState()
+    
+    // State for forecast selection - initialized to Today by default
+    val (selectedForecastDay, setSelectedForecastDay) = androidx.compose.runtime.remember { 
+        val initialForecast = com.app.astrojournal.utils.generateWeeklyMoonForecast()
+        androidx.compose.runtime.mutableStateOf<com.app.astrojournal.data.model.WeeklyMoonDay?>(initialForecast.firstOrNull()) 
+    }
 
     LaunchedEffect(Unit) {
         viewModel.fetchMoonData()
     }
 
     Scaffold(
-        bottomBar = { AstroBottomNavigation() },
+        bottomBar = { AstroBottomNavigation(currentScreen = currentScreen, onNavigate = onNavigate) },
         containerColor = BackgroundDark,
         contentColor = Color.White
     ) { innerPadding ->
@@ -162,11 +176,22 @@ fun HomeScreen(viewModel: HomeViewModel) {
                         ),
                         verticalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
-                        // Cabecera con la fase lunar principal
-                        item { MoonHeader(moonData.value) }
+                        // Cabecera con la fase lunar (actual o seleccionada)
+                        item { 
+                            if (selectedForecastDay != null) {
+                                SelectedForecastHeader(selectedForecastDay)
+                            } else {
+                                MoonHeader(moonData.value)
+                            }
+                        }
                         
                         // Vista detallada de la próxima semana
-                        item { ComingWeek(moonData.value?.moon_age) }
+                        item { 
+                            ComingWeek(
+                                selectedDate = selectedForecastDay?.date,
+                                onDateSelected = { setSelectedForecastDay(if (it.date == selectedForecastDay?.date) null else it) }
+                            ) 
+                        }
                         
                         // Lista de eventos astronómicos dinámicos
                         item { CelestialObjectsList(events.value) }
@@ -177,6 +202,94 @@ fun HomeScreen(viewModel: HomeViewModel) {
     }
 }
 
+
+@Composable
+fun SelectedForecastHeader(day: com.app.astrojournal.data.model.WeeklyMoonDay) {
+    val phaseNameEs = getPhaseNameInSpanish(day.phase)
+    
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(bottom = 24.dp)
+    ) {
+        // Label de fecha seleccionada (Full day name in English)
+        val dayName = day.date.dayOfWeek.getDisplayName(java.time.format.TextStyle.FULL, localeEnglish)
+            .replaceFirstChar { it.uppercase() }
+            
+        Text(
+            text = dayName,
+            style = MaterialTheme.typography.labelLarge.copy(
+                color = Indigo300,
+                fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
+                letterSpacing = 1.sp
+            ),
+            modifier = Modifier.padding(bottom = 8.dp)
+        )
+
+        Box(
+            modifier = Modifier
+                .size(256.dp)
+                .padding(bottom = 16.dp)
+        ) {
+            Crossfade(targetState = day.imageRes, label = "ForecastMoonCrossfade") { imageRes ->
+                Image(
+                    painter = painterResource(id = imageRes),
+                    contentDescription = day.phase,
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .clip(CircleShape),
+                    contentScale = ContentScale.Fit // Usar Fit como en el calendario
+                )
+            }
+        }
+
+        Text(
+            text = phaseNameEs,
+            style = MaterialTheme.typography.headlineMedium.copy(
+                fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
+                color = TextGray100
+            )
+        )
+
+        Text(
+            text = "Moon Age: ${"%.1f".format(day.age)} days",
+            style = MaterialTheme.typography.bodyMedium.copy(
+                color = Indigo200,
+                fontWeight = androidx.compose.ui.text.font.FontWeight.Medium
+            ),
+            modifier = Modifier.padding(top = 4.dp)
+        )
+
+        Box(
+            modifier = Modifier
+                .padding(top = 4.dp)
+                .background(Color(0xFF312E81).copy(alpha = 0.4f), RoundedCornerShape(4.dp))
+                .border(1.dp, Indigo500.copy(alpha = 0.3f), RoundedCornerShape(4.dp))
+                .padding(horizontal = 8.dp, vertical = 2.dp)
+        ) {
+            Text(
+                text = "Illumination: ${day.illumination}%",
+                style = MaterialTheme.typography.labelSmall.copy(color = TextGray400)
+            )
+        }
+    }
+}
+
+// Helper: nombre de fase en español (Copinado de Calendar para consistencia)
+private fun getPhaseNameInSpanish(phaseName: String): String {
+    return when (phaseName) {
+        "New Moon" -> "Luna Nueva"
+        "Waxing Crescent" -> "Creciente Iluminante"
+        "First Quarter" -> "Cuarto Creciente"
+        "Waxing Gibbous" -> "Gibosa Creciente"
+        "Full Moon" -> "Luna Llena"
+        "Waning Gibbous" -> "Gibosa Menguante"
+        "Last Quarter" -> "Cuarto Menguante"
+        "Waning Crescent" -> "Creciente Menguante"
+        else -> phaseName
+    }
+}
 
 @Composable
 fun MoonHeader(moonData: com.app.astrojournal.data.model.Astro?) {

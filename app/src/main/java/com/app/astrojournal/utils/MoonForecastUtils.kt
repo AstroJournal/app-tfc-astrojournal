@@ -1,31 +1,38 @@
 package com.app.astrojournal.utils
 
 import com.app.astrojournal.data.model.WeeklyMoonDay
-import com.app.astrojournal.ui.screens.getMoonPhaseImage
 import com.app.astrojournal.ui.screens.getPhaseFromMoonAge
+import com.app.astrojournal.ui.screens.getMoonPhaseImage
 import java.time.LocalDate
-import java.time.ZoneId
-import java.time.ZonedDateTime
-import java.time.format.TextStyle
+import java.util.Date
 import java.util.Locale
 
-
-fun generateWeeklyMoonForecast(currentAge: Double): List<WeeklyMoonDay> {
+fun generateWeeklyMoonForecast(): List<WeeklyMoonDay> {
     val forecast = mutableListOf<WeeklyMoonDay>()
-    val today = java.time.LocalDate.now()
+    val today = LocalDate.now()
     
     for (i in 0..6) {
-        val age = (currentAge + i) % 29.53 // ciclo lunar
-        val phase = getPhaseFromMoonAge(age)
-        val imageRes = getMoonPhaseImage(phase)
-        
         val date = today.plusDays(i.toLong())
+        val javaDate = Date.from(date.atStartOfDay(java.time.ZoneId.systemDefault()).toInstant())
+        
+        val phaseInfo = MoonCalculator.getMoonPhaseInfo(javaDate)
+        val imageRes = getMoonPhaseImage(phaseInfo.phaseName)
+        
         val dayLabel = if (i == 0) "Today" else date.dayOfWeek.getDisplayName(
             java.time.format.TextStyle.SHORT, 
-            java.util.Locale.getDefault()
+            Locale.ENGLISH
         )
         
-        forecast.add(WeeklyMoonDay(dayLabel, phase, imageRes))
+        forecast.add(
+            WeeklyMoonDay(
+                dayLabel = dayLabel,
+                phase = phaseInfo.phaseName,
+                imageRes = imageRes,
+                age = phaseInfo.moonAge,
+                illumination = phaseInfo.illumination,
+                date = date
+            )
+        )
     }
     return forecast
 }

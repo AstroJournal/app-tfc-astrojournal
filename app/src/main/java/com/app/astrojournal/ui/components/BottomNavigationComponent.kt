@@ -29,17 +29,20 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 
 /**
- * Custom Bottom Navigation Bar.
- * - Simulates a glass panel floating at the bottom.
- * - Contains a centered "Floating Action Button" style Moon button.
- * - Uses a gradient fade at the very bottom to blend with the background.
+ * Custom Bottom Navigation Bar with navigation support.
+ * @param currentScreen The currently selected screen identifier.
+ * @param onNavigate Callback invoked when a navigation button is tapped.
  */
 @Composable
-fun AstroBottomNavigation(modifier: Modifier = Modifier) {
+fun AstroBottomNavigation(
+    currentScreen: String = "home",
+    onNavigate: (String) -> Unit = {},
+    modifier: Modifier = Modifier
+) {
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .height(100.dp) // Height including the floating effect
+            .height(100.dp)
     ) {
         // Gradient overlay for bottom fade
         Box(
@@ -62,7 +65,7 @@ fun AstroBottomNavigation(modifier: Modifier = Modifier) {
                 .align(Alignment.Center)
                 .padding(bottom = 24.dp)
                 .height(64.dp)
-                .fillMaxWidth(0.85f) // Adjust width to match design ~max-w-md
+                .fillMaxWidth(0.85f)
                 .clip(CircleShape)
                 .background(Color(0xFF121629).copy(alpha = 0.65f))
                 .border(1.dp, Color(0xFFFFFFFF).copy(alpha = 0.1f), CircleShape),
@@ -73,29 +76,36 @@ fun AstroBottomNavigation(modifier: Modifier = Modifier) {
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                NavButton(icon = Icons.Outlined.StarOutline, contentDescription = "Stars")
-                NavButton(icon = Icons.Outlined.CalendarToday, contentDescription = "Calendar")
-                
-                // Center Fab
-                Box(
-                    modifier = Modifier
-                        .size(48.dp)
-                        .clip(CircleShape)
-                        .background(Color(0xFF4F46E5)) // Indigo 600
-                        .border(4.dp, Color(0xFF0B0C15), CircleShape)
-                        .clickable { /* TODO */ },
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.DarkMode,
-                        contentDescription = "Moon",
-                        tint = Color.White,
-                        modifier = Modifier.size(24.dp)
-                    )
-                }
-
-                NavButton(icon = Icons.Outlined.FavoriteBorder, contentDescription = "Favorites")
-                NavButton(icon = Icons.Outlined.PersonOutline, contentDescription = "Profile")
+                NavButton(
+                    icon = Icons.Outlined.StarOutline,
+                    contentDescription = "Stars",
+                    isSelected = false,
+                    onClick = { /* TODO */ }
+                )
+                NavButton(
+                    icon = Icons.Outlined.CalendarToday,
+                    contentDescription = "Calendar",
+                    isSelected = currentScreen == "calendar",
+                    onClick = { onNavigate("calendar") }
+                )
+                NavButton(
+                    icon = Icons.Default.DarkMode,
+                    contentDescription = "Home",
+                    isSelected = currentScreen == "home",
+                    onClick = { onNavigate("home") }
+                )
+                NavButton(
+                    icon = Icons.Outlined.FavoriteBorder,
+                    contentDescription = "Favorites",
+                    isSelected = false,
+                    onClick = { /* TODO */ }
+                )
+                NavButton(
+                    icon = Icons.Outlined.PersonOutline,
+                    contentDescription = "Profile",
+                    isSelected = false,
+                    onClick = { /* TODO */ }
+                )
             }
         }
     }
@@ -105,19 +115,27 @@ fun AstroBottomNavigation(modifier: Modifier = Modifier) {
 fun NavButton(
     icon: ImageVector,
     contentDescription: String,
+    isSelected: Boolean = false,
+    onClick: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
+    val tintColor = if (isSelected) Color(0xFF6366F1) else Color(0xFF9CA3AF) // Indigo 500 vs Gray 400
+
     Box(
         modifier = modifier
             .size(40.dp)
             .clip(CircleShape)
-            .clickable { /* TODO */ },
+            .then(
+                if (isSelected) Modifier.background(Color(0xFF6366F1).copy(alpha = 0.15f))
+                else Modifier
+            )
+            .clickable { onClick() },
         contentAlignment = Alignment.Center
     ) {
         Icon(
             imageVector = icon,
             contentDescription = contentDescription,
-            tint = Color(0xFF9CA3AF), // Gray 400
+            tint = tintColor,
             modifier = Modifier.size(24.dp)
         )
     }

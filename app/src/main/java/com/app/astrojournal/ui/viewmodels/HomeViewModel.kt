@@ -1,4 +1,4 @@
-package com.app.astrojournal.viewmodel
+package com.app.astrojournal.ui.viewmodels
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope

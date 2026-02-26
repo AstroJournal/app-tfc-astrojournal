@@ -2,6 +2,8 @@ package com.app.astrojournal.ui.screens
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
@@ -9,22 +11,27 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.app.astrojournal.utils.getMoonPhaseIcon
+import com.app.astrojournal.data.model.WeeklyMoonDay
 import com.app.astrojournal.utils.generateWeeklyMoonForecast
-
+import java.time.LocalDate
 
 @Composable
-fun ComingWeek(moonAge: Double?) {
-    if (moonAge == null) return
-    val forecast = generateWeeklyMoonForecast(moonAge)
+fun ComingWeek(
+    selectedDate: LocalDate?,
+    onDateSelected: (WeeklyMoonDay) -> Unit
+) {
+    val forecast = generateWeeklyMoonForecast()
 
     Column(
         modifier = Modifier
             .fillMaxWidth()
             .background(GlassPanelBg, RoundedCornerShape(16.dp))
+            .border(1.dp, White10, RoundedCornerShape(16.dp))
             .padding(16.dp)
     ) {
         Text(
@@ -39,16 +46,24 @@ fun ComingWeek(moonAge: Double?) {
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             forecast.forEach { day ->
+                val isSelected = day.date == selectedDate
+                
                 Column(
-                    modifier = Modifier.weight(1f),
+                    modifier = Modifier
+                        .weight(1f)
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(if (isSelected) Indigo500.copy(alpha = 0.2f) else Color.Transparent)
+                        .clickable { onDateSelected(day) }
+                        .padding(vertical = 8.dp),
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
                     Text(
                         text = day.dayLabel, 
-                        color = Indigo200,
+                        color = if (isSelected) Color.White else Indigo200,
                         style = MaterialTheme.typography.labelSmall,
-                        fontSize = 10.sp
+                        fontSize = 10.sp,
+                        fontWeight = if (isSelected) androidx.compose.ui.text.font.FontWeight.Bold else androidx.compose.ui.text.font.FontWeight.Normal
                     )
 
                     Image(
@@ -57,8 +72,6 @@ fun ComingWeek(moonAge: Double?) {
                         modifier = Modifier.size(24.dp)
                     )
 
-                    // Solo mostramos la primera letra o una versión muy corta si es necesario
-                    // para evitar que se desorganice el layout
                     val shortPhase = when(day.phase) {
                         "New Moon" -> "New"
                         "Full Moon" -> "Full"
@@ -73,29 +86,12 @@ fun ComingWeek(moonAge: Double?) {
                     
                     Text(
                         text = shortPhase, 
-                        color = TextGray400,
+                        color = if (isSelected) Indigo200 else TextGray400,
                         style = MaterialTheme.typography.labelSmall,
                         fontSize = 8.sp
                     )
                 }
             }
         }
-    }
-}
-
-
-@Composable
-fun DayItem(day: String, phase: String, label: String) {
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Text(text = day, color = Indigo200, fontSize = 10.sp)
-
-        // Icono de la luna según fase
-        Image(
-            painter = painterResource(id = getMoonPhaseIcon(phase)),
-            contentDescription = phase,
-            modifier = Modifier.size(24.dp)
-        )
-
-        Text(text = label, color = TextGray400, fontSize = 10.sp)
     }
 }

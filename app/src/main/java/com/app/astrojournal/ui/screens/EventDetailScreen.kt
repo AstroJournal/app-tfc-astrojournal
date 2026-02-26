@@ -36,8 +36,8 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import com.app.astrojournal.R
-import com.app.astrojournal.eventdetail.EventDetailViewModel
-import com.app.astrojournal.model.Event
+import com.app.astrojournal.ui.viewmodels.EventDetailViewModel
+import com.app.astrojournal.data.model.Event
 import com.app.astrojournal.ui.components.AstroBottomNavigation
 
 @Composable

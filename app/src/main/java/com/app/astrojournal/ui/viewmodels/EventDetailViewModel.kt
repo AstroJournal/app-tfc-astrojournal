@@ -1,4 +1,4 @@
-package com.app.astrojournal.eventdetail
+package com.app.astrojournal.ui.viewmodels
 
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf

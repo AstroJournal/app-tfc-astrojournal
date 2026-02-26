@@ -4,19 +4,13 @@ import android.content.Context
 import app.cash.sqldelight.db.SqlDriver
 import app.cash.sqldelight.driver.android.AndroidSqliteDriver
 
-/**
- * Android implementation of DatabaseDriverFactory.
- * Creates an AndroidSqliteDriver.
- */
+// Actual implementation for Android
 actual class DatabaseDriverFactory(private val context: Context) {
-    /**
-     * Creates the Android SQL driver.
-     * @return AndroidSqliteDriver with the schema and context.
-     */
-    actual fun createDriver(): SqlDriver =
-        AndroidSqliteDriver(
+    actual fun createDriver(): SqlDriver {
+        return AndroidSqliteDriver(
             AstrojournalDatabase.Schema,
             context,
             "astrojournal.db"
         )
+    }
 }

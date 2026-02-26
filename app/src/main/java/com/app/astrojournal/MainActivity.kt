@@ -3,26 +3,16 @@ package com.app.astrojournal.ui
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-<<<<<<< HEAD
-import com.app.astrojournal.di.AppModule
-import com.app.astrojournal.eventdetail.EventDetailRoute
-import com.app.astrojournal.ui.theme.AstrojournalTheme
-
-class MainActivity : ComponentActivity() {
-
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-
-        AppModule.init(this)
-
-        setContent {
-            AstrojournalTheme {
-                EventDetailRoute(eventId = 1L)   // ← TU EVENTO
-            }
-=======
 import androidx.activity.viewModels
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import com.app.astrojournal.di.AppModule
+import com.app.astrojournal.ui.screens.CalendarScreen
 import com.app.astrojournal.ui.screens.HomeScreen
-import com.app.astrojournal.viewmodel.HomeViewModel
+import com.app.astrojournal.ui.viewmodels.HomeViewModel
+import com.app.astrojournal.ui.theme.AstrojournalTheme
 
 class MainActivity : ComponentActivity() {
 
@@ -31,10 +21,25 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        AppModule.init(this)
+
         setContent {
-            // Pasamos el ViewModel a HomeScreen
-            HomeScreen(viewModel = homeViewModel)
->>>>>>> bc821a1e650413544953f20884ac65c28fb11123
+            AstrojournalTheme {
+                var currentScreen by remember { mutableStateOf("home") }
+
+                when (currentScreen) {
+                    "home" -> HomeScreen(
+                        viewModel = homeViewModel,
+                        currentScreen = currentScreen,
+                        onNavigate = { currentScreen = it }
+                    )
+                    "calendar" -> CalendarScreen(
+                        currentScreen = currentScreen,
+                        onNavigate = { currentScreen = it }
+                    )
+                }
+            }
         }
     }
 }
