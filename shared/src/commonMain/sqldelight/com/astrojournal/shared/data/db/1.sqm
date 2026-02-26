@@ -1,0 +1,1 @@
+ALTER TABLE collectible ADD COLUMN eventName TEXT NOT NULL DEFAULT '';

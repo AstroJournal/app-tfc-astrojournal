@@ -21,9 +21,13 @@ import androidx.compose.ui.text.font.FontWeight
 /**
  * Muestra una lista de objetos y eventos celestiales próximos.
  * @param events Lista de eventos astronómicos calculados.
+ * @param onEventClick Callback invocado cuando el usuario pulsa un evento.
  */
 @Composable
-fun CelestialObjectsList(events: List<AstroEvent>) {
+fun CelestialObjectsList(
+    events: List<AstroEvent>,
+    onEventClick: (AstroEvent) -> Unit = {}
+) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -55,6 +59,7 @@ fun CelestialObjectsList(events: List<AstroEvent>) {
                 name = event.name,
                 description = event.description,
                 date = event.date,
+                onClick = { onEventClick(event) },
                 icon = {
                     // Seleccionar el icono adecuado según el tipo de evento
                     when (event.type) {
@@ -77,12 +82,13 @@ fun CelestialItem(
     name: String,
     description: String,
     date: String,
-    icon: @Composable () -> Unit
+    icon: @Composable () -> Unit,
+    onClick: () -> Unit = {}
 ) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable { /* Futura navegación al detalle */ }
+            .clickable { onClick() }
             .padding(16.dp),
         horizontalArrangement = Arrangement.spacedBy(16.dp)
     ) {

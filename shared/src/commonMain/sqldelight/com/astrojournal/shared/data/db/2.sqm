@@ -1,0 +1,20 @@
+-- Add agended column and unique constraint by recreating the table
+-- We use a group by to ensure no duplicates exist before applying the UNIQUE constraint
+CREATE TABLE collectible_new (
+    id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    eventId INTEGER NOT NULL,
+    eventName TEXT NOT NULL DEFAULT '',
+    observationDate TEXT NOT NULL,
+    notes TEXT,
+    observed INTEGER NOT NULL DEFAULT 0,
+    agended INTEGER NOT NULL DEFAULT 1, -- Default to 1 to preserve agenda status for migrated items
+    UNIQUE(eventId)
+);
+
+INSERT INTO collectible_new (eventId, eventName, observationDate, notes, observed, agended)
+SELECT eventId, MAX(eventName), MAX(observationDate), MAX(notes), MAX(observed), 1
+FROM collectible
+GROUP BY eventId;
+
+DROP TABLE collectible;
+ALTER TABLE collectible_new RENAME TO collectible;

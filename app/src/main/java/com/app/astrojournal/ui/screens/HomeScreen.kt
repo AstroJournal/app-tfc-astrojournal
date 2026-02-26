@@ -38,6 +38,7 @@ import com.app.astrojournal.ui.viewmodels.UiState
 import com.app.astrojournal.R
 import com.app.astrojournal.ui.screens.ComingWeek
 import androidx.compose.ui.zIndex
+import com.app.astrojournal.data.model.AstroEvent
 
 
 // Colors from Design
@@ -60,7 +61,8 @@ private val localeEnglish = Locale.ENGLISH
 fun HomeScreen(
     viewModel: HomeViewModel,
     currentScreen: String = "home",
-    onNavigate: (String) -> Unit = {}
+    onNavigate: (String) -> Unit = {},
+    onEventSelected: (AstroEvent) -> Unit = {}
 ) {
     val moonData = viewModel.moonData.collectAsState()
     val uiState = viewModel.uiState.collectAsState()
@@ -194,7 +196,7 @@ fun HomeScreen(
                         }
                         
                         // Lista de eventos astronómicos dinámicos
-                        item { CelestialObjectsList(events.value) }
+                        item { CelestialObjectsList(events = events.value, onEventClick = onEventSelected) }
                     }
                 }
             }

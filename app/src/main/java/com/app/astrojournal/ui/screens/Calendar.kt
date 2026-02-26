@@ -6,10 +6,9 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
@@ -76,48 +75,54 @@ fun CalendarScreen(
                 contentScale = ContentScale.Crop
             )
 
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(innerPadding)
-                    .padding(horizontal = 12.dp, vertical = 16.dp)
-                    .verticalScroll(rememberScrollState())
+            LazyColumn(
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(
+                    top = 16.dp + innerPadding.calculateTopPadding(),
+                    start = 12.dp,
+                    end = 12.dp,
+                    bottom = 24.dp + innerPadding.calculateBottomPadding()
+                ),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 // Cabecera del mes con flechas
-                CalendarHeader(
-                    currentMonth = currentMonth,
-                    onPreviousMonth = { currentMonth = currentMonth.minusMonths(1) },
-                    onNextMonth = { currentMonth = currentMonth.plusMonths(1) }
-                )
-
-                Spacer(modifier = Modifier.height(12.dp))
-
-                // Panel de cristal con el calendario
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(16.dp))
-                        .background(GlassPanelBg)
-                        .border(1.dp, White10, RoundedCornerShape(16.dp))
-                        .padding(12.dp)
-                ) {
-                    DaysOfWeekHeader()
-                    Spacer(modifier = Modifier.height(4.dp))
-                    CalendarGrid(
+                item {
+                    CalendarHeader(
                         currentMonth = currentMonth,
-                        selectedDate = selectedDate,
-                        onDateSelected = { selectedDate = it }
+                        onPreviousMonth = { currentMonth = currentMonth.minusMonths(1) },
+                        onNextMonth = { currentMonth = currentMonth.plusMonths(1) }
                     )
                 }
 
-                Spacer(modifier = Modifier.height(16.dp))
+                // Panel de cristal con el calendario
+                item {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(16.dp))
+                            .background(GlassPanelBg)
+                            .border(1.dp, White10, RoundedCornerShape(16.dp))
+                            .padding(12.dp)
+                    ) {
+                        DaysOfWeekHeader()
+                        Spacer(modifier = Modifier.height(4.dp))
+                        CalendarGrid(
+                            currentMonth = currentMonth,
+                            selectedDate = selectedDate,
+                            onDateSelected = { selectedDate = it }
+                        )
+                    }
+                }
 
                 // Detalle de la fase lunar del día seleccionado
-                SelectedDayMoonDetail(selectedDate)
+                item {
+                    SelectedDayMoonDetail(selectedDate)
+                }
             }
         }
     }
 }
+
 
 @Composable
 fun CalendarHeader(
