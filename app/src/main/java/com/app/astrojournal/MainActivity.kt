@@ -13,6 +13,8 @@ import com.app.astrojournal.di.AppModule
 import com.app.astrojournal.ui.screens.CalendarScreen
 import com.app.astrojournal.ui.screens.EventDetailScreen
 import com.app.astrojournal.ui.screens.HomeScreen
+import com.app.astrojournal.ui.screens.LoginScreen
+import com.app.astrojournal.ui.screens.RegisterScreen
 import com.app.astrojournal.ui.viewmodels.EventDetailViewModel
 import com.app.astrojournal.ui.viewmodels.HomeViewModel
 import com.app.astrojournal.ui.theme.AstrojournalTheme
@@ -29,10 +31,18 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             AstrojournalTheme {
-                var currentScreen by remember { mutableStateOf("home") }
+                var currentScreen by remember { mutableStateOf("login") }
                 var selectedEvent by remember { mutableStateOf<AstroEvent?>(null) }
 
                 when (currentScreen) {
+                    "login" -> LoginScreen(
+                        onLoginSuccess = { currentScreen = "home" },
+                        onNavigateToRegister = { currentScreen = "register" }
+                    )
+                    "register" -> RegisterScreen(
+                        onRegisterSuccess = { currentScreen = "home" },
+                        onNavigateToLogin = { currentScreen = "login" }
+                    )
                     "home" -> HomeScreen(
                         viewModel = homeViewModel,
                         currentScreen = currentScreen,
