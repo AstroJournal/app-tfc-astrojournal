@@ -38,6 +38,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.platform.testTag
 import com.app.astrojournal.R
 
 @Composable
@@ -114,7 +115,9 @@ fun RegisterScreen(
                 OutlinedTextField(
                     value = username,
                     onValueChange = { username = it },
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .testTag("register_username_input"),
                     placeholder = { Text("astro_fan", color = Color(0xFF475569)) },
                     singleLine = true,
                     textStyle = MaterialTheme.typography.bodyLarge.copy(color = Color.White),
@@ -144,7 +147,9 @@ fun RegisterScreen(
                 OutlinedTextField(
                     value = email,
                     onValueChange = { email = it },
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .testTag("register_email_input"),
                     placeholder = { Text("tu@email.com", color = Color(0xFF475569)) },
                     singleLine = true,
                     textStyle = MaterialTheme.typography.bodyLarge.copy(color = Color.White),
@@ -180,7 +185,9 @@ fun RegisterScreen(
                 OutlinedTextField(
                     value = password,
                     onValueChange = { password = it },
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .testTag("register_password_input"),
                     placeholder = { Text("••••••••", color = Color(0xFF475569)) },
                     singleLine = true,
                     visualTransformation = PasswordVisualTransformation(),
@@ -211,7 +218,9 @@ fun RegisterScreen(
                 OutlinedTextField(
                     value = repeatPassword,
                     onValueChange = { repeatPassword = it },
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .testTag("register_repeat_password_input"),
                     placeholder = { Text("••••••••", color = Color(0xFF475569)) },
                     singleLine = true,
                     visualTransformation = PasswordVisualTransformation(),
@@ -252,7 +261,8 @@ fun RegisterScreen(
                     },
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(50.dp),
+                        .height(50.dp)
+                        .testTag("register_submit_button"),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = Color(0xFF6366F1),
                         contentColor = Color.White
@@ -270,7 +280,9 @@ fun RegisterScreen(
                 
                 TextButton(
                     onClick = onNavigateToLogin,
-                    modifier = Modifier.align(Alignment.CenterHorizontally)
+                    modifier = Modifier
+                        .align(Alignment.CenterHorizontally)
+                        .testTag("register_login_nav_button")
                 ) {
                     Text(
                         text = "¿Ya tienes cuenta? Inicia sesión",

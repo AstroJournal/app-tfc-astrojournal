@@ -36,6 +36,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.platform.testTag
 import com.app.astrojournal.R
 
 @Composable
@@ -46,6 +47,7 @@ fun LoginScreen(
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var emailError by remember { mutableStateOf(false) }
+    var passwordError by remember { mutableStateOf(false) }
 
     // Solid dark background matching the general aesthetic
     Box(
@@ -97,7 +99,9 @@ fun LoginScreen(
                 OutlinedTextField(
                     value = email,
                     onValueChange = { email = it },
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .testTag("login_email_input"),
                     placeholder = { Text("tu@email.com", color = Color(0xFF475569)) },
                     singleLine = true,
                     textStyle = MaterialTheme.typography.bodyLarge.copy(color = Color.White),
@@ -132,7 +136,9 @@ fun LoginScreen(
                 OutlinedTextField(
                     value = password,
                     onValueChange = { password = it },
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .testTag("login_password_input"),
                     placeholder = { Text("••••••••", color = Color(0xFF475569)) },
                     singleLine = true,
                     visualTransformation = PasswordVisualTransformation(),
@@ -148,6 +154,12 @@ fun LoginScreen(
                         keyboardType = KeyboardType.Password,
                         imeAction = ImeAction.Done
                     ),
+                    isError = passwordError,
+                    supportingText = {
+                        if (passwordError) {
+                            Text("La contraseña es obligatoria", color = Color(0xFFFCA5A5))
+                        }
+                    },
                     shape = RoundedCornerShape(12.dp)
                 )
 
@@ -156,15 +168,18 @@ fun LoginScreen(
                 Button(
                     onClick = {
                         val isEmailValid = email.isNotBlank() && android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()
+                        val isPasswordValid = password.isNotBlank()
                         emailError = !isEmailValid
-                        
-                        if (isEmailValid) {
+                        passwordError = !isPasswordValid
+
+                        if (isEmailValid && isPasswordValid) {
                             onLoginSuccess()
                         }
                     },
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(50.dp),
+                        .height(50.dp)
+                        .testTag("login_submit_button"),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = Color(0xFF6366F1),
                         contentColor = Color.White
@@ -182,7 +197,9 @@ fun LoginScreen(
 
                 androidx.compose.material3.TextButton(
                     onClick = onNavigateToRegister,
-                    modifier = Modifier.align(Alignment.CenterHorizontally)
+                    modifier = Modifier
+                        .align(Alignment.CenterHorizontally)
+                        .testTag("login_register_nav_button")
                 ) {
                     Text(
                         text = "¿No tienes cuenta? Regístrate aquí",

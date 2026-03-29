@@ -27,9 +27,11 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.platform.testTag
 import com.app.astrojournal.R
 import com.app.astrojournal.ui.components.AstroBottomNavigation
 import com.app.astrojournal.ui.theme.AstrojournalTheme
+import com.app.astrojournal.utils.calculateCalendarMonthMeta
 import com.app.astrojournal.utils.MoonCalculator
 import java.time.DayOfWeek
 import java.time.LocalDate
@@ -198,20 +200,18 @@ fun CalendarGrid(
     selectedDate: LocalDate,
     onDateSelected: (LocalDate) -> Unit
 ) {
-    val daysInMonth = currentMonth.lengthOfMonth()
-    val firstDayOfMonth = currentMonth.atDay(1).dayOfWeek
-    val offset = (firstDayOfMonth.value - DayOfWeek.MONDAY.value + 7) % 7
+    val monthMeta = calculateCalendarMonthMeta(currentMonth)
     val today = LocalDate.now()
 
     Column(modifier = Modifier.fillMaxWidth()) {
         var dayOfMonth = 1
-        val totalCells = if (offset + daysInMonth > 35) 42 else 35
+        val totalCells = monthMeta.totalCells
 
         for (i in 0 until totalCells / 7) {
             Row(modifier = Modifier.fillMaxWidth()) {
                 for (j in 0 until 7) {
                     val cellIndex = i * 7 + j
-                    if (cellIndex >= offset && dayOfMonth <= daysInMonth) {
+                    if (cellIndex >= monthMeta.firstDayOffset && dayOfMonth <= monthMeta.daysInMonth) {
                         val date = currentMonth.atDay(dayOfMonth)
                         val isToday = date == today
                         val isSelected = date == selectedDate
@@ -249,6 +249,7 @@ fun DayCell(day: Int, date: LocalDate, isToday: Boolean, isSelected: Boolean) {
         modifier = Modifier
             .fillMaxSize()
             .padding(2.dp)
+            .testTag(if (isToday) "calendar_today_cell" else "calendar_day_cell_${date}")
             .clip(RoundedCornerShape(8.dp))
             .then(
                 when {

@@ -14,6 +14,9 @@ SELECT * FROM collectible;
 selectById:
 SELECT * FROM collectible WHERE id = ?;
 
+selectByEventId:
+SELECT * FROM collectible WHERE eventId = ? ORDER BY id DESC LIMIT 1;
+
 insertCollectible:
 INSERT INTO collectible(eventId, eventName, observationDate, notes, observed, agended)
 VALUES (?, ?, ?, ?, ?, ?);
@@ -40,6 +43,9 @@ WHERE id = :id;
 
 deleteById:
 DELETE FROM collectible WHERE id = ?;
+
+deleteByEventId:
+DELETE FROM collectible WHERE eventId = ?;
 
 deleteAll:
 DELETE FROM collectible;

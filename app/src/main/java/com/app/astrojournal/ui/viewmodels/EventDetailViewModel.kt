@@ -5,29 +5,46 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
-import java.time.Instant
-import com.app.shared.data.db.CollectibleRepository
+import com.app.shared.data.db.CollectibleStore
 import com.astrojournal.shared.data.db.Collectible
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withContext
+
+sealed class EventDetailUiState {
+    data object Loading : EventDetailUiState()
+    data class Success(val eventId: Long) : EventDetailUiState()
+    data class Error(val message: String) : EventDetailUiState()
+}
+
+enum class AgendaFilter {
+    ALL,
+    PENDING,
+    OBSERVED
+}
 
 class EventDetailViewModel(
-    private val repo: CollectibleRepository
+    private val repo: CollectibleStore,
+    private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO
 ) : ViewModel() {
 
-    // List of all collectibles (notes, agenda items, etc.)
     var collectibles by mutableStateOf<List<Collectible>>(emptyList())
         private set
 
-    // Status for the CURRENT event being viewed
     var isEventObserved by mutableStateOf(false)
         private set
     var isEventAgended by mutableStateOf(false)
         private set
     var currentEventNote by mutableStateOf("")
+        private set
+
+    var uiState by mutableStateOf<EventDetailUiState>(EventDetailUiState.Loading)
+        private set
+
+    var agendaFilter by mutableStateOf(AgendaFilter.ALL)
         private set
 
     private val dbMutex = Mutex()
@@ -40,13 +57,17 @@ class EventDetailViewModel(
     private fun cleanupDuplicates() {
         viewModelScope.launch {
             dbMutex.withLock {
-                withContext(Dispatchers.IO) {
+                withContext(ioDispatcher) {
                     val all = repo.getAll()
                     val groups = all.groupBy { it.eventId }
-                    groups.forEach { (eventId, records) ->
+                    groups.forEach { (_, records) ->
                         if (records.size > 1) {
-                            // Keep the most complete record (one with note or observed status)
-                            val bestRecord = records.sortedWith(compareByDescending<Collectible> { it.observed }.thenByDescending { it.notes?.length ?: -1L }).first()
+                            val bestRecord = records
+                                .sortedWith(
+                                    compareByDescending<Collectible> { it.observed }
+                                        .thenByDescending { it.notes?.length ?: -1L }
+                                )
+                                .first()
                             records.filter { it.id != bestRecord.id }.forEach {
                                 repo.deleteById(it.id)
                             }
@@ -60,18 +81,34 @@ class EventDetailViewModel(
 
     private fun loadCollectibles() {
         viewModelScope.launch {
-            val result = withContext(Dispatchers.IO) {
+            val result = withContext(ioDispatcher) {
                 repo.getAll()
             }
             collectibles = result
         }
     }
 
-    /**
-     * Updates the status (Observed/Agended) and note for a specific event ID.
-     */
+    fun loadEvent(eventId: Long) {
+        viewModelScope.launch {
+            uiState = EventDetailUiState.Loading
+            runCatching {
+                withContext(ioDispatcher) {
+                    val record = repo.getByEventId(eventId)
+                    Triple(record?.observed == 1L, record?.agended == 1L, record?.notes ?: "")
+                }
+            }.onSuccess { (observed, agended, note) ->
+                isEventObserved = observed
+                isEventAgended = agended
+                currentEventNote = note
+                uiState = EventDetailUiState.Success(eventId)
+            }.onFailure { error ->
+                uiState = EventDetailUiState.Error(error.message ?: "Unknown error")
+            }
+        }
+    }
+
     fun updateEventStatus(eventId: Long) {
-        val record = collectibles.find { it.eventId == eventId }
+        val record = collectibles.lastOrNull { it.eventId == eventId }
         isEventObserved = record?.observed == 1L
         isEventAgended = record?.agended == 1L
         currentEventNote = record?.notes ?: ""
@@ -105,21 +142,19 @@ class EventDetailViewModel(
         observed: Boolean
     ) {
         dbMutex.withLock {
-            withContext(Dispatchers.IO) {
-                val existing = repo.getAll().find { it.eventId == eventId }
-                
+            withContext(ioDispatcher) {
+                val existing = repo.getByEventId(eventId)
+
                 val finalObserved = if (observed) 1 else 0
                 val finalAgended = if (agended) 1 else 0
                 val shouldExist = agended || observed || note.isNotBlank()
 
                 if (shouldExist) {
                     if (existing != null) {
-                        // Update existing
                         repo.updateObserved(existing.id, finalObserved)
                         repo.updateAgended(existing.id, finalAgended)
                         repo.updateNotes(existing.id, note.ifBlank { null })
                     } else {
-                        // Insert new
                         repo.insertCollectible(
                             eventId = eventId,
                             eventName = eventName,
@@ -130,17 +165,17 @@ class EventDetailViewModel(
                         )
                     }
                 } else if (existing != null) {
-                    // Remove if no longer needed
-                    repo.deleteById(existing.id)
+                    repo.deleteByEventId(eventId)
                 }
             }
         }
         loadCollectibles()
+        loadEvent(eventId)
     }
 
     fun deleteNote(id: Long) {
         viewModelScope.launch {
-            withContext(Dispatchers.IO) {
+            withContext(ioDispatcher) {
                 repo.deleteById(id)
             }
             loadCollectibles()
@@ -150,4 +185,9 @@ class EventDetailViewModel(
     fun markObserved(observed: Boolean) {
         isEventObserved = observed
     }
+
+    fun updateAgendaFilter(filter: AgendaFilter) {
+        agendaFilter = filter
+    }
+
 }

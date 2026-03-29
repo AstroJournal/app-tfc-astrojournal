@@ -26,13 +26,9 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 
-/**
- * Custom Bottom Navigation Bar with navigation support.
- * @param currentScreen The currently selected screen identifier.
- * @param onNavigate Callback invoked when a navigation button is tapped.
- */
 @Composable
 fun AstroBottomNavigation(
     currentScreen: String = "home",
@@ -44,7 +40,6 @@ fun AstroBottomNavigation(
             .fillMaxWidth()
             .height(100.dp)
     ) {
-        // Gradient overlay for bottom fade
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -59,7 +54,6 @@ fun AstroBottomNavigation(
                 )
         )
 
-        // Glass panel container
         Box(
             modifier = Modifier
                 .align(Alignment.Center)
@@ -72,39 +66,45 @@ fun AstroBottomNavigation(
             contentAlignment = Alignment.Center
         ) {
             Row(
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 24.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 NavButton(
                     icon = Icons.Outlined.StarOutline,
                     contentDescription = "Stars",
-                    isSelected = false,
-                    onClick = { /* TODO */ }
+                    isSelected = currentScreen == "eventOfTheDay",
+                    onClick = { onNavigate("eventOfTheDay") },
+                    modifier = Modifier.testTag("bottom_nav_stars")
                 )
                 NavButton(
                     icon = Icons.Outlined.CalendarToday,
                     contentDescription = "Calendar",
                     isSelected = currentScreen == "calendar",
-                    onClick = { onNavigate("calendar") }
+                    onClick = { onNavigate("calendar") },
+                    modifier = Modifier.testTag("bottom_nav_calendar")
                 )
                 NavButton(
                     icon = Icons.Default.DarkMode,
                     contentDescription = "Home",
                     isSelected = currentScreen == "home",
-                    onClick = { onNavigate("home") }
+                    onClick = { onNavigate("home") },
+                    modifier = Modifier.testTag("bottom_nav_home")
                 )
                 NavButton(
                     icon = Icons.Outlined.FavoriteBorder,
                     contentDescription = "Favorites",
-                    isSelected = false,
-                    onClick = { /* TODO */ }
+                    isSelected = currentScreen == "eventDetail",
+                    onClick = { onNavigate("eventDetail") },
+                    modifier = Modifier.testTag("bottom_nav_event_detail")
                 )
                 NavButton(
                     icon = Icons.Outlined.PersonOutline,
                     contentDescription = "Profile",
-                    isSelected = false,
-                    onClick = { /* TODO */ }
+                    isSelected = currentScreen == "login",
+                    onClick = { onNavigate("login") }
                 )
             }
         }
@@ -119,7 +119,7 @@ fun NavButton(
     onClick: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
-    val tintColor = if (isSelected) Color(0xFF6366F1) else Color(0xFF9CA3AF) // Indigo 500 vs Gray 400
+    val tintColor = if (isSelected) Color(0xFF6366F1) else Color(0xFF9CA3AF)
 
     Box(
         modifier = modifier

@@ -39,6 +39,7 @@ import com.app.astrojournal.R
 import com.app.astrojournal.ui.screens.ComingWeek
 import androidx.compose.ui.zIndex
 import com.app.astrojournal.data.model.AstroEvent
+import androidx.compose.ui.platform.testTag
 
 
 // Colors from Design
@@ -116,7 +117,9 @@ fun HomeScreen(
                         ) {
                             androidx.compose.material3.CircularProgressIndicator(
                                 color = Indigo300,
-                                modifier = Modifier.size(48.dp)
+                                modifier = Modifier
+                                    .size(48.dp)
+                                    .testTag("home_loading_indicator")
                             )
                             Text(
                                 text = "Loading moon data...",
@@ -145,7 +148,8 @@ fun HomeScreen(
                                 style = MaterialTheme.typography.headlineMedium.copy(
                                     color = TextGray100,
                                     fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
-                                )
+                                ),
+                                modifier = Modifier.testTag("home_error_title")
                             )
                             Text(
                                 text = state.message,
@@ -156,7 +160,8 @@ fun HomeScreen(
                                 onClick = { viewModel.fetchMoonData() },
                                 colors = androidx.compose.material3.ButtonDefaults.buttonColors(
                                     containerColor = Indigo500
-                                )
+                                ),
+                                modifier = Modifier.testTag("home_retry_button")
                             ) {
                                 Text("Retry")
                             }
@@ -398,6 +403,5 @@ fun calculateIllumination(age: Double): Int {
     return if (age <= 14.0) ((age / 14.0) * 100).toInt()
     else (100 - ((age - 14) / 15.53 * 100)).toInt()
 }
-
 
 
