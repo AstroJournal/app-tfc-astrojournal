@@ -48,6 +48,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.People
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
@@ -286,6 +287,33 @@ fun EventDetailScreen(
                             }
                             Spacer(modifier = Modifier.width(8.dp))
                             Text(text = actionLabel, fontWeight = FontWeight.Bold)
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    // Connect to Social Events Feature
+                    Button(
+                        onClick = {
+                            // Enviar el nombre del evento como parámetro en la navegación a social
+                            onNavigate("social?initialEventName=${event.name}")
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color(0xFF1E293B), // Background dark
+                            contentColor = Color(0xFFA5B4FC)    // Indigo pale
+                        ),
+                        shape = RoundedCornerShape(12.dp),
+                        border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF6366F1).copy(alpha = 0.5f))
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            androidx.compose.material3.Icon(
+                                imageVector = Icons.Filled.People,
+                                contentDescription = null,
+                                modifier = Modifier.size(18.dp)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(text = "Crear quedada para este evento", fontWeight = FontWeight.Bold)
                         }
                     }
                 }

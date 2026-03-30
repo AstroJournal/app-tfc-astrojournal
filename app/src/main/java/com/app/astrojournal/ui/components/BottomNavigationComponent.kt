@@ -16,6 +16,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DarkMode
 import androidx.compose.material.icons.outlined.CalendarToday
 import androidx.compose.material.icons.outlined.FavoriteBorder
+import androidx.compose.material.icons.outlined.PeopleOutline
 import androidx.compose.material.icons.outlined.PersonOutline
 import androidx.compose.material.icons.outlined.StarOutline
 import androidx.compose.material3.Icon
@@ -77,10 +78,10 @@ fun AstroBottomNavigation(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 NavButton(
-                    icon = Icons.Outlined.StarOutline,
-                    contentDescription = "Stars",
-                    isSelected = false,
-                    onClick = { /* TODO */ }
+                    icon = Icons.Outlined.PeopleOutline,
+                    contentDescription = "Social",
+                    isSelected = currentScreen == "social",
+                    onClick = { onNavigate("social") }
                 )
                 NavButton(
                     icon = Icons.Outlined.CalendarToday,

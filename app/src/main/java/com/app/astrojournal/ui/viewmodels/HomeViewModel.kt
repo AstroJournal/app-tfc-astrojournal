@@ -9,8 +9,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.delay
-import java.text.SimpleDateFormat
-import java.util.*
+
+import com.app.astrojournal.utils.AstroEventCalculator
 
 // Sealed class para representar los diferentes estados de la UI
 sealed class UiState {
@@ -65,52 +65,9 @@ class HomeViewModel : ViewModel() {
         }
     }
 
-    /**
-     * Calcula los próximos eventos astronómicos (Estaciones, Eclipses, Oposiciones) para los siguientes meses.
-     */
     private fun fetchUpcomingEvents() {
-        val events = mutableListOf<AstroEvent>()
-        val startTime = Time.fromMillisecondsSince1970(Date().time)
-        val currentYear = startTime.toDateTime().year
-        val df = SimpleDateFormat("dd MMM yyyy", Locale.getDefault())
-
-        // 1. Agregar Estaciones (Equinoccios y Solsticios)
-        val yearsToSearch = listOf(currentYear, currentYear + 1)
-        yearsToSearch.forEach { year ->
-            val s = seasons(year)
-            listOf(
-                Triple("March Equinox", "Inicio de la primavera (N) / otoño (S)", s.marchEquinox),
-                Triple("June Solstice", "Inicio del verano (N) / invierno (S)", s.juneSolstice),
-                Triple("September Equinox", "Inicio del otoño (N) / primavera (S)", s.septemberEquinox),
-                Triple("December Solstice", "Inicio del invierno (N) / verano (S)", s.decemberSolstice)
-            ).forEach { (name, desc, time) ->
-                if (time.toMillisecondsSince1970() > startTime.toMillisecondsSince1970()) {
-                    events.add(AstroEvent(name, desc, df.format(Date(time.toMillisecondsSince1970())), time.toMillisecondsSince1970(), EventType.OTHER))
-                }
-            }
-        }
-
-        // 2. Agregar Eclipses
-        val solar = searchGlobalSolarEclipse(startTime)
-        events.add(AstroEvent("Solar Eclipse", "Eclipse solar global (${solar.kind})", df.format(Date(solar.peak.toMillisecondsSince1970())), solar.peak.toMillisecondsSince1970(), EventType.CONJUNCTION))
-        
-        val lunar = searchLunarEclipse(startTime)
-        events.add(AstroEvent("Lunar Eclipse", "Eclipse lunar (${lunar.kind})", df.format(Date(lunar.peak.toMillisecondsSince1970())), lunar.peak.toMillisecondsSince1970(), EventType.MOON_PHASE))
-
-        // 3. Agregar Oposiciones Planetarias (Mejor momento para ver planetas)
-        listOf(Body.Mars, Body.Jupiter, Body.Saturn).forEach { planet ->
-            val opp = searchRelativeLongitude(planet, 0.0, startTime)
-            events.add(AstroEvent("$planet Opposition", "El planeta $planet está en su punto más cercano a la Tierra", df.format(Date(opp.toMillisecondsSince1970())), opp.toMillisecondsSince1970(), EventType.PLANET))
-        }
-
-        // 4. Venus Peak Magnitude
-        try {
-            val venusPeak = searchPeakMagnitude(Body.Venus, startTime)
-            events.add(AstroEvent("Venus Peak Brightness", "Máximo brillo de Venus en el cielo", df.format(Date(venusPeak.time.toMillisecondsSince1970())), venusPeak.time.toMillisecondsSince1970(), EventType.PLANET))
-        } catch (e: Exception) { /* Solo Venus soportado */ }
-
-        // Ordenar cronológicamente y tomar los primeros 7
-        _upcomingEvents.value = events.sortedBy { it.timestamp }.take(7)
+        val events = AstroEventCalculator.getUpcomingEvents(limit = 7)
+        _upcomingEvents.value = events
     }
 
     /**
