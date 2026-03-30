@@ -91,7 +91,7 @@ fun LoginScreen(
                     .padding(24.dp)
             ) {
                 Text(
-                    text = "Iniciar Sesión",
+                    text = "Log in",
                     style = MaterialTheme.typography.titleLarge,
                     color = Color.White,
                     fontWeight = FontWeight.Bold,
@@ -140,7 +140,7 @@ fun LoginScreen(
                 Spacer(modifier = Modifier.height(16.dp))
 
                 Text(
-                    text = "Contraseña",
+                    text = "Password",
                     style = MaterialTheme.typography.labelMedium,
                     color = Color(0xFF94A3B8)
                 )
@@ -189,7 +189,7 @@ fun LoginScreen(
                         )
                     } else {
                         Text(
-                            text = "Acceder",
+                            text = "Sign in",
                             fontWeight = FontWeight.Bold,
                             fontSize = 16.sp
                         )
@@ -203,7 +203,7 @@ fun LoginScreen(
                     modifier = Modifier.align(Alignment.CenterHorizontally)
                 ) {
                     Text(
-                        text = "¿No tienes cuenta? Regístrate aquí",
+                        text = "Don't have an account? Sign up here",
                         color = Color(0xFF818CF8),
                         style = MaterialTheme.typography.bodyMedium
                     )

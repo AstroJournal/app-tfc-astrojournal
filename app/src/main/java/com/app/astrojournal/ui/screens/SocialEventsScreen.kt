@@ -55,6 +55,7 @@ fun SocialEventsScreen(
     }
 
     Scaffold(
+        topBar = { com.app.astrojournal.ui.components.AstroTopBar(onProfileClick = { onNavigate("profile") }) },
         bottomBar = { AstroBottomNavigation(currentScreen = currentScreen, onNavigate = onNavigate) },
         floatingActionButton = {
             FloatingActionButton(
@@ -65,7 +66,7 @@ fun SocialEventsScreen(
                 containerColor = Color(0xFF6366F1),
                 contentColor = Color.White
             ) {
-                Icon(Icons.Default.Add, contentDescription = "Crear nuevo evento")
+                Icon(Icons.Default.Add, contentDescription = "Create new event")
             }
         },
         containerColor = Color.Transparent,
@@ -96,14 +97,14 @@ fun SocialEventsScreen(
                 
                 // Header
                 Text(
-                    text = "Eventos Astronómicos",
+                    text = "Astronomical Events",
                     style = MaterialTheme.typography.headlineMedium.copy(
                         fontWeight = FontWeight.Bold,
                         color = Color.White
                     )
                 )
                 Text(
-                    text = "Quedadas y encuentros",
+                    text = "Meetups and gatherings",
                     style = MaterialTheme.typography.bodyMedium.copy(
                         color = Color(0xFF94A3B8)
                     )
@@ -116,8 +117,8 @@ fun SocialEventsScreen(
                     value = uiState.searchQuery,
                     onValueChange = { viewModel.updateSearchQuery(it) },
                     modifier = Modifier.fillMaxWidth(),
-                    placeholder = { Text("Buscar evento o ubicación...", color = Color(0xFF475569)) },
-                    leadingIcon = { Icon(Icons.Default.Search, contentDescription = "Buscar", tint = Color(0xFF475569)) },
+                    placeholder = { Text("Search event or location...", color = Color(0xFF475569)) },
+                    leadingIcon = { Icon(Icons.Default.Search, contentDescription = "Search", tint = Color(0xFF475569)) },
                     singleLine = true,
                     textStyle = MaterialTheme.typography.bodyLarge.copy(color = Color.White),
                     colors = OutlinedTextFieldDefaults.colors(
@@ -148,12 +149,12 @@ fun SocialEventsScreen(
                     Tab(
                         selected = selectedTabIndex == 0,
                         onClick = { selectedTabIndex = 0 },
-                        text = { Text("Todos", fontWeight = if (selectedTabIndex == 0) FontWeight.Bold else FontWeight.Normal) }
+                        text = { Text("All", fontWeight = if (selectedTabIndex == 0) FontWeight.Bold else FontWeight.Normal) }
                     )
                     Tab(
                         selected = selectedTabIndex == 1,
                         onClick = { selectedTabIndex = 1 },
-                        text = { Text("Mis Eventos", fontWeight = if (selectedTabIndex == 1) FontWeight.Bold else FontWeight.Normal) }
+                        text = { Text("My Events", fontWeight = if (selectedTabIndex == 1) FontWeight.Bold else FontWeight.Normal) }
                     )
                 }
 
@@ -169,7 +170,7 @@ fun SocialEventsScreen(
                 if (filteredEvents.isEmpty()) {
                     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                         Text(
-                            text = "No se encontraron eventos",
+                            text = "No events found",
                             color = Color(0xFF94A3B8),
                             style = MaterialTheme.typography.bodyLarge
                         )
@@ -252,10 +253,10 @@ fun MeetupEventCard(
                 if (event.isMine == 1L) {
                     Row {
                         IconButton(onClick = onEdit, modifier = Modifier.size(32.dp)) {
-                            Icon(Icons.Default.Edit, contentDescription = "Editar", tint = Color(0xFF94A3B8), modifier = Modifier.size(20.dp))
+                            Icon(Icons.Default.Edit, contentDescription = "Edit", tint = Color(0xFF94A3B8), modifier = Modifier.size(20.dp))
                         }
                         IconButton(onClick = onDelete, modifier = Modifier.size(32.dp)) {
-                            Icon(Icons.Default.Delete, contentDescription = "Eliminar", tint = Color(0xFFFCA5A5), modifier = Modifier.size(20.dp))
+                            Icon(Icons.Default.Delete, contentDescription = "Delete", tint = Color(0xFFFCA5A5), modifier = Modifier.size(20.dp))
                         }
                     }
                 }
@@ -280,7 +281,7 @@ fun MeetupEventCard(
                         .padding(horizontal = 8.dp, vertical = 4.dp)
                 ) {
                     Text(
-                        text = "🔭 Ligado a: ${event.linkedAstroEventName}",
+                        text = "🔭 Linked to: ${event.linkedAstroEventName}",
                         style = MaterialTheme.typography.labelSmall.copy(color = Color(0xFFA5B4FC))
                     )
                 }
@@ -314,13 +315,13 @@ fun MeetupEventDialog(
         containerColor = Color(0xFF1E293B),
         titleContentColor = Color.White,
         textContentColor = Color.White,
-        title = { Text(if (initialEvent == null) "Crear Evento" else "Editar Evento") },
+        title = { Text(if (initialEvent == null) "Create Event" else "Edit Event") },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 OutlinedTextField(
                     value = title,
                     onValueChange = { title = it },
-                    label = { Text("Título", color = Color(0xFF94A3B8)) },
+                    label = { Text("Title", color = Color(0xFF94A3B8)) },
                     singleLine = true,
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedBorderColor = Color(0xFF6366F1),
@@ -332,7 +333,7 @@ fun MeetupEventDialog(
                 OutlinedTextField(
                     value = description,
                     onValueChange = { description = it },
-                    label = { Text("Descripción", color = Color(0xFF94A3B8)) },
+                    label = { Text("Description", color = Color(0xFF94A3B8)) },
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedBorderColor = Color(0xFF6366F1),
                         focusedTextColor = Color.White,
@@ -343,7 +344,7 @@ fun MeetupEventDialog(
                 OutlinedTextField(
                     value = location,
                     onValueChange = { location = it },
-                    label = { Text("Ubicación", color = Color(0xFF94A3B8)) },
+                    label = { Text("Location", color = Color(0xFF94A3B8)) },
                     singleLine = true,
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedBorderColor = Color(0xFF6366F1),
@@ -355,8 +356,8 @@ fun MeetupEventDialog(
                 OutlinedTextField(
                     value = dateTime,
                     onValueChange = { dateTime = it },
-                    label = { Text("Fecha y hora", color = Color(0xFF94A3B8)) },
-                    placeholder = { Text("ej. 2026-08-12 22:00", color = Color.Gray) },
+                    label = { Text("Date and time", color = Color(0xFF94A3B8)) },
+                    placeholder = { Text("e.g. 2026-08-12 22:00", color = Color.Gray) },
                     singleLine = true,
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedBorderColor = Color(0xFF6366F1),
@@ -373,12 +374,12 @@ fun MeetupEventDialog(
                     onExpandedChange = { expanded = !expanded }
                 ) {
                     OutlinedTextField(
-                        value = if (selectedLinkedEvent.isBlank()) "Ninguno" else selectedLinkedEvent,
+                        value = if (selectedLinkedEvent.isBlank()) "None" else selectedLinkedEvent,
                         onValueChange = { },
                         readOnly = true,
-                        label = { Text("Asociar con evento astronómico", color = Color(0xFF94A3B8)) },
+                        label = { Text("Link to astronomical event", color = Color(0xFF94A3B8)) },
                         trailingIcon = {
-                            Icon(Icons.Default.ArrowDropDown, contentDescription = "Desplegar")
+                            Icon(Icons.Default.ArrowDropDown, contentDescription = "Expand")
                         },
                         colors = OutlinedTextFieldDefaults.colors(
                             focusedBorderColor = Color(0xFF6366F1),
@@ -396,7 +397,7 @@ fun MeetupEventDialog(
                         modifier = Modifier.background(Color(0xFF1E293B))
                     ) {
                         DropdownMenuItem(
-                            text = { Text("Ninguno", color = Color.White) },
+                            text = { Text("None", color = Color.White) },
                             onClick = {
                                 selectedLinkedEvent = ""
                                 expanded = false
@@ -414,7 +415,7 @@ fun MeetupEventDialog(
                                     selectedLinkedEvent = astroEvent.name
                                     // Autocompletar el título si estaba vacío
                                     if (title.isBlank()) {
-                                        title = "Quedada: ${astroEvent.name}"
+                                        title = "Meetup: ${astroEvent.name}"
                                     }
                                     if (dateTime.isBlank()) {
                                         dateTime = astroEvent.date
@@ -436,12 +437,12 @@ fun MeetupEventDialog(
                 colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF6366F1)),
                 enabled = title.isNotBlank() && location.isNotBlank() && dateTime.isNotBlank()
             ) {
-                Text("Guardar", color = Color.White)
+                Text("Save", color = Color.White)
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("Cancelar", color = Color(0xFF94A3B8))
+                Text("Cancel", color = Color(0xFF94A3B8))
             }
         }
     )

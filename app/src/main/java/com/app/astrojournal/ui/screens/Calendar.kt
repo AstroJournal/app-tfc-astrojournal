@@ -12,6 +12,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -36,6 +37,11 @@ import java.time.LocalDate
 import java.time.YearMonth
 import java.time.ZoneId
 import java.time.format.TextStyle
+import com.app.astrojournal.ui.viewmodels.CalendarViewModel
+import com.astrojournal.shared.data.db.Collectible
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
+import java.time.format.DateTimeFormatter
 import java.util.Date
 import java.util.Locale
 
@@ -44,14 +50,36 @@ private val localeEnglish = Locale.ENGLISH
 
 @Composable
 fun CalendarScreen(
+    viewModel: CalendarViewModel? = null,
     currentScreen: String = "calendar",
     onNavigate: (String) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     var currentMonth by remember { mutableStateOf(YearMonth.now()) }
     var selectedDate by remember { mutableStateOf(LocalDate.now()) }
+    val collectibles = viewModel?.collectibles?.collectAsState()
+    val allCollectibles = collectibles?.value ?: emptyList()
+
+    // Reload data every time this screen is shown so calendar dots stay fresh
+    androidx.compose.runtime.LaunchedEffect(Unit) {
+        viewModel?.load()
+    }
+
+    // Set of dates that have agended events (formatted as ISO date string)
+    val agendedDates = remember(allCollectibles) {
+        allCollectibles
+            .filter { it.agended == 1L }
+            .map { 
+                java.time.Instant.ofEpochMilli(it.eventId)
+                    .atZone(java.time.ZoneId.systemDefault())
+                    .toLocalDate()
+                    .toString()
+            }
+            .toSet()
+    }
 
     Scaffold(
+        topBar = { com.app.astrojournal.ui.components.AstroTopBar(onProfileClick = { onNavigate("profile") }) },
         bottomBar = { AstroBottomNavigation(currentScreen = currentScreen, onNavigate = onNavigate) },
         containerColor = Color.Transparent,
         contentColor = Color.White
@@ -65,7 +93,7 @@ fun CalendarScreen(
                     )
                 )
         ) {
-            // Fondo estrellado
+            // Starry background
             Image(
                 painter = painterResource(id = R.drawable.stary_night_bg),
                 contentDescription = null,
@@ -85,7 +113,7 @@ fun CalendarScreen(
                 ),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                // Cabecera del mes con flechas
+                // Month header with arrows
                 item {
                     CalendarHeader(
                         currentMonth = currentMonth,
@@ -94,7 +122,7 @@ fun CalendarScreen(
                     )
                 }
 
-                // Panel de cristal con el calendario
+                // Glass panel with the calendar grid
                 item {
                     Column(
                         modifier = Modifier
@@ -109,14 +137,19 @@ fun CalendarScreen(
                         CalendarGrid(
                             currentMonth = currentMonth,
                             selectedDate = selectedDate,
+                            agendedDates = agendedDates,
                             onDateSelected = { selectedDate = it }
                         )
                     }
                 }
 
-                // Detalle de la fase lunar del día seleccionado
+                // Moon + agenda detail for selected day
                 item {
-                    SelectedDayMoonDetail(selectedDate)
+                    SelectedDayMoonDetail(
+                        selectedDate = selectedDate,
+                        collectibles = allCollectibles,
+                        onUnagenda = { collectibleId -> viewModel?.unagendaEvent(collectibleId) }
+                    )
                 }
             }
         }
@@ -196,6 +229,7 @@ fun DaysOfWeekHeader() {
 fun CalendarGrid(
     currentMonth: YearMonth,
     selectedDate: LocalDate,
+    agendedDates: Set<String> = emptySet(),
     onDateSelected: (LocalDate) -> Unit
 ) {
     val daysInMonth = currentMonth.lengthOfMonth()
@@ -225,7 +259,8 @@ fun CalendarGrid(
                                 .clickable { onDateSelected(date) },
                             contentAlignment = Alignment.Center
                         ) {
-                            DayCell(currentDay, date, isToday, isSelected)
+                            val hasAgendedEvent = agendedDates.contains(date.toString())
+                            DayCell(currentDay, date, isToday, isSelected, hasAgendedEvent)
                         }
                         dayOfMonth++
                     } else {
@@ -244,7 +279,7 @@ fun CalendarGrid(
 }
 
 @Composable
-fun DayCell(day: Int, date: LocalDate, isToday: Boolean, isSelected: Boolean) {
+fun DayCell(day: Int, date: LocalDate, isToday: Boolean, isSelected: Boolean, hasAgendedEvent: Boolean = false) {
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -264,10 +299,10 @@ fun DayCell(day: Int, date: LocalDate, isToday: Boolean, isSelected: Boolean) {
             ),
         contentAlignment = Alignment.Center
     ) {
-        // Imagen de fase lunar de fondo
+        // Moon phase background image
         MoonPhaseImage(date = date)
 
-        // Número del día
+        // Day number
         Text(
             text = day.toString(),
             style = MaterialTheme.typography.bodyMedium.copy(
@@ -277,6 +312,16 @@ fun DayCell(day: Int, date: LocalDate, isToday: Boolean, isSelected: Boolean) {
             ),
             modifier = Modifier.align(Alignment.Center)
         )
+
+        // White agenda dot at the bottom of the cell
+        if (hasAgendedEvent) {
+            Box(
+                modifier = Modifier
+                    .size(5.dp)
+                    .align(Alignment.BottomCenter)
+                    .background(Color.White, CircleShape)
+            )
+        }
     }
 }
 
@@ -289,7 +334,7 @@ fun MoonPhaseImage(date: LocalDate) {
         MoonCalculator.getMoonPhaseInfo(javaDate)
     }
 
-    val imageRes = getMoonPhaseImage(phaseInfo.phaseName)
+    val imageRes = com.app.astrojournal.utils.MoonUiUtils.getMoonPhaseImage(phaseInfo.phaseName)
 
     Image(
         painter = painterResource(id = imageRes),
@@ -303,19 +348,34 @@ fun MoonPhaseImage(date: LocalDate) {
 }
 
 // -----------------------------------------------
-// Detalle del día seleccionado (como en HomeScreen)
+// Selected day detail: moon phase + agenda events
 // -----------------------------------------------
 @Composable
-fun SelectedDayMoonDetail(selectedDate: LocalDate) {
-    val javaDate = Date.from(
+fun SelectedDayMoonDetail(
+    selectedDate: LocalDate,
+    collectibles: List<com.astrojournal.shared.data.db.Collectible> = emptyList(),
+    onUnagenda: (Long) -> Unit = {}
+) {
+    val javaDate = java.util.Date.from(
         selectedDate.atStartOfDay(ZoneId.systemDefault()).toInstant()
     )
     val phaseInfo = remember(selectedDate) {
         MoonCalculator.getMoonPhaseInfo(javaDate)
     }
 
-    val moonImageRes = getMoonPhaseImage(phaseInfo.phaseName)
-    val phaseNameEs = getPhaseNameInSpanish(phaseInfo.phaseName)
+    val moonImageRes = com.app.astrojournal.utils.MoonUiUtils.getMoonPhaseImage(phaseInfo.phaseName)
+    val phaseName = com.app.astrojournal.utils.MoonUiUtils.getPhaseNameInSpanish(phaseInfo.phaseName)
+
+    // Events for selected date using timestamp (eventId) to match exact Calendar LocalDate
+    val selectedDateStr = selectedDate.toString()
+    val dayCollectibles = collectibles.filter { 
+        java.time.Instant.ofEpochMilli(it.eventId)
+            .atZone(java.time.ZoneId.systemDefault())
+            .toLocalDate()
+            .toString() == selectedDateStr 
+    }
+    val agendedEvents = dayCollectibles.filter { it.agended == 1L }
+    val otherEvents = dayCollectibles.filter { it.agended != 1L }
 
     // Formato de la fecha seleccionada (Full day name in English)
     val dateLabel = "${selectedDate.dayOfWeek.getDisplayName(TextStyle.FULL, localeEnglish)
@@ -333,7 +393,7 @@ fun SelectedDayMoonDetail(selectedDate: LocalDate) {
             .padding(20.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        // Fecha
+        // Date header
         Text(
             text = dateLabel,
             style = MaterialTheme.typography.labelLarge.copy(
@@ -362,18 +422,18 @@ fun SelectedDayMoonDetail(selectedDate: LocalDate) {
             }
         }
 
-        // Nombre de la fase
+        // Phase name (English)
         Text(
-            text = phaseNameEs,
+            text = phaseName,
             style = MaterialTheme.typography.headlineSmall.copy(
                 fontWeight = FontWeight.Bold,
                 color = TextGray100
             )
         )
 
-        // Edad de la luna
+        // Lunar age
         Text(
-            text = "Edad lunar: ${"%.1f".format(phaseInfo.moonAge)} días",
+            text = "Lunar age: ${"%.1f".format(phaseInfo.moonAge)} days",
             style = MaterialTheme.typography.bodyMedium.copy(
                 color = Indigo200,
                 fontWeight = FontWeight.Medium
@@ -381,7 +441,7 @@ fun SelectedDayMoonDetail(selectedDate: LocalDate) {
             modifier = Modifier.padding(top = 4.dp)
         )
 
-        // Badge de iluminación
+        // Illumination badge
         Box(
             modifier = Modifier
                 .padding(top = 6.dp)
@@ -390,32 +450,145 @@ fun SelectedDayMoonDetail(selectedDate: LocalDate) {
                 .padding(horizontal = 8.dp, vertical = 2.dp)
         ) {
             Text(
-                text = "Iluminación: ${phaseInfo.illumination}%",
+                text = "Illumination: ${phaseInfo.illumination}%",
                 style = MaterialTheme.typography.labelSmall.copy(color = TextGray400)
             )
+        }
+
+        // --- Events panel ---
+        Spacer(modifier = Modifier.height(16.dp))
+        HorizontalDivider(color = White10)
+        Spacer(modifier = Modifier.height(12.dp))
+
+        Text(
+            text = "Scheduled events",
+            style = MaterialTheme.typography.labelMedium.copy(
+                color = Indigo300,
+                fontWeight = FontWeight.Bold
+            ),
+            modifier = Modifier.fillMaxWidth()
+        )
+        Spacer(modifier = Modifier.height(6.dp))
+
+        if (agendedEvents.isNotEmpty()) {
+            agendedEvents.forEach { item ->
+                AgendaEventRow(item, isAgended = true, onUnagenda = onUnagenda)
+            }
+        } else {
+            Text(
+                text = "No scheduled events for this day.",
+                style = MaterialTheme.typography.bodySmall.copy(
+                    color = TextGray400,
+                    fontStyle = androidx.compose.ui.text.font.FontStyle.Italic
+                ),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 8.dp)
+            )
+        }
+
+        if (otherEvents.isNotEmpty()) {
+            Spacer(modifier = Modifier.height(10.dp))
+            Text(
+                text = "\uD83D\uDD2D Other records",
+                style = MaterialTheme.typography.labelMedium.copy(
+                    color = TextGray400,
+                    fontWeight = FontWeight.Bold
+                ),
+                modifier = Modifier.fillMaxWidth()
+            )
+            Spacer(modifier = Modifier.height(6.dp))
+            otherEvents.forEach { item ->
+                AgendaEventRow(item, isAgended = false)
+            }
         }
     }
 }
 
-// Helper: nombre de fase en español
-private fun getPhaseNameInSpanish(phaseName: String): String {
-    return when (phaseName) {
-        "New Moon" -> "Luna Nueva"
-        "Waxing Crescent" -> "Creciente Iluminante"
-        "First Quarter" -> "Cuarto Creciente"
-        "Waxing Gibbous" -> "Gibosa Creciente"
-        "Full Moon" -> "Luna Llena"
-        "Waning Gibbous" -> "Gibosa Menguante"
-        "Last Quarter" -> "Cuarto Menguante"
-        "Waning Crescent" -> "Creciente Menguante"
-        else -> phaseName
+@Composable
+private fun AgendaEventRow(
+    item: com.astrojournal.shared.data.db.Collectible,
+    isAgended: Boolean,
+    onUnagenda: (Long) -> Unit = {}
+) {
+    var showConfirm by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(false) }
+
+    if (showConfirm) {
+        AlertDialog(
+            onDismissRequest = { showConfirm = false },
+            title = { Text("Remove from schedule?") },
+            text = { Text("Are you sure you want to remove \"${item.eventName}\" from your agenda? This action cannot be undone.") },
+            confirmButton = {
+                TextButton(onClick = {
+                    showConfirm = false
+                    onUnagenda(item.id)
+                }) {
+                    Text("Remove", color = Color(0xFFEF4444))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showConfirm = false }) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 4.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        Box(
+            modifier = Modifier
+                .size(8.dp)
+                .background(
+                    if (isAgended) Indigo300 else TextGray400,
+                    CircleShape
+                )
+        )
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = item.eventName,
+                style = MaterialTheme.typography.bodySmall.copy(
+                    color = TextGray100,
+                    fontWeight = FontWeight.Medium
+                )
+            )
+            item.notes?.let { note ->
+                if (note.isNotBlank()) {
+                    Text(
+                        text = note,
+                        style = MaterialTheme.typography.labelSmall.copy(color = TextGray400)
+                    )
+                }
+            }
+        }
+        // Delete from agenda button (only shown for agended events)
+        if (isAgended) {
+            IconButton(
+                onClick = { showConfirm = true },
+                modifier = Modifier.size(32.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Filled.Delete,
+                    contentDescription = "Remove from agenda",
+                    tint = Color(0xFFEF4444),
+                    modifier = Modifier.size(18.dp)
+                )
+            }
+        }
     }
 }
 
-@Preview(showBackground = true, showSystemUi = true)
-@Composable
-fun CalendarPreview() {
-    AstrojournalTheme {
-        CalendarScreen()
-    }
-}
+// getPhaseNameInSpanish centralized in MoonUiUtils
+
+
+//@Preview(showBackground = true, showSystemUi = true)
+//@Composable
+//fun CalendarPreview() {
+//    AstrojournalTheme {
+//        CalendarScreen()
+//    }
+//}

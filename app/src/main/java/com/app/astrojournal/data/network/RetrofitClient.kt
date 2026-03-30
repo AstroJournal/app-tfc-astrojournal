@@ -11,4 +11,17 @@ object RetrofitClient {
             .build()
             .create(AstronomyApi::class.java)
     }
+
+    private fun retrofit(baseUrl: String): Retrofit = Retrofit.Builder()
+        .baseUrl(baseUrl)
+        .addConverterFactory(GsonConverterFactory.create())
+        .build()
+
+    val apodApi: ApodApi by lazy {
+        retrofit("https://api.nasa.gov/").create(ApodApi::class.java)
+    }
+
+    val visibilityApi: VisibilityApi by lazy {
+        retrofit("https://api.open-meteo.com/").create(VisibilityApi::class.java)
+    }
 }

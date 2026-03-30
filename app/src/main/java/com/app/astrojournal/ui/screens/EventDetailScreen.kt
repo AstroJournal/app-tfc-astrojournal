@@ -50,6 +50,11 @@ import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.People
 import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -70,6 +75,70 @@ fun EventDetailScreen(
     var noteInput by remember { mutableStateOf("") }
     val scrollState = rememberScrollState()
     val focusManager = LocalFocusManager.current
+    val now = System.currentTimeMillis()
+
+    var eventToRemoveFromAgenda by remember { mutableStateOf<com.astrojournal.shared.data.db.Collectible?>(null) }
+    var eventToMarkAsViewed by remember { mutableStateOf<com.astrojournal.shared.data.db.Collectible?>(null) }
+
+    if (eventToRemoveFromAgenda != null) {
+        AlertDialog(
+            onDismissRequest = { eventToRemoveFromAgenda = null },
+            title = { Text("Remove from agenda", color = Color.White) },
+            text = { Text("Are you sure you want to remove this event from your agenda?", color = Color.White) },
+            confirmButton = {
+                TextButton(onClick = {
+                    val item = eventToRemoveFromAgenda!!
+                    viewModel.saveFullEventState(
+                        eventId = item.eventId,
+                        eventName = item.eventName,
+                        date = item.observationDate,
+                        note = item.notes ?: "",
+                        agended = false,
+                        observed = item.observed == 1L
+                    )
+                    eventToRemoveFromAgenda = null
+                }) {
+                    Text("Remove", color = Color(0xFFFCA5A5))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { eventToRemoveFromAgenda = null }) {
+                    Text("Cancel", color = Color(0xFF94A3B8))
+                }
+            },
+            containerColor = Color(0xFF1E293B)
+        )
+    }
+
+    if (eventToMarkAsViewed != null) {
+        AlertDialog(
+            onDismissRequest = { eventToMarkAsViewed = null },
+            title = { Text("Mark as viewed", color = Color.White) },
+            text = { Text("Do you want to mark this past event as observed?", color = Color.White) },
+            confirmButton = {
+                TextButton(onClick = {
+                    val item = eventToMarkAsViewed!!
+                    viewModel.saveFullEventState(
+                        eventId = item.eventId,
+                        eventName = item.eventName,
+                        date = item.observationDate,
+                        note = item.notes ?: "",
+                        agended = false,
+                        observed = true
+                    )
+                    eventToMarkAsViewed = null
+                }) {
+                    Text("Mark viewed", color = Color(0xFF6366F1))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { eventToMarkAsViewed = null }) {
+                    Text("Cancel", color = Color(0xFF94A3B8))
+                }
+            },
+            containerColor = Color(0xFF1E293B)
+        )
+    }
 
     // Use the event timestamp as a stable ID
     val eventId = event.timestamp
@@ -82,6 +151,7 @@ fun EventDetailScreen(
     }
 
     Scaffold(
+        topBar = { com.app.astrojournal.ui.components.AstroTopBar(onProfileClick = { onNavigate("profile") }) },
         bottomBar = {
             AstroBottomNavigation(
                 currentScreen = currentScreen,
@@ -147,7 +217,7 @@ fun EventDetailScreen(
                     Spacer(modifier = Modifier.height(16.dp))
                     
                     Text(
-                        text = "Notas personales",
+                        text = "Personal Notes",
                         style = MaterialTheme.typography.labelMedium,
                         color = Color(0xFF6366F1)
                     )
@@ -159,7 +229,7 @@ fun EventDetailScreen(
                             noteInput = it
                         },
                         modifier = Modifier.fillMaxWidth(),
-                        placeholder = { Text("Añade una nota opcional...", color = Color(0xFF475569)) },
+                        placeholder = { Text("Add an optional note...", color = Color(0xFF475569)) },
                         textStyle = MaterialTheme.typography.bodyMedium.copy(color = Color.White),
                         colors = OutlinedTextFieldDefaults.colors(
                             focusedBorderColor = Color(0xFF6366F1),
@@ -208,7 +278,7 @@ fun EventDetailScreen(
                                 )
                                 Spacer(modifier = Modifier.width(4.dp))
                                 Text(
-                                    text = if (viewModel.currentEventNote.isNotBlank()) "Guardar cambios" else "Guardar nota",
+                                    text = if (viewModel.currentEventNote.isNotBlank()) "Save changes" else "Save note",
                                     color = Color(0xFF6366F1),
                                     style = MaterialTheme.typography.labelLarge
                                 )
@@ -220,15 +290,15 @@ fun EventDetailScreen(
 
                     // Integrated Action Button
                     val actionLabel = if (isFuture) {
-                        if (viewModel.isEventAgended) "Quitar de mi agenda" else "Añadir a mi agenda"
+                        if (viewModel.isEventAgended) "Remove from agenda" else "Add to agenda"
                     } else {
-                        if (viewModel.isEventObserved) "Desmarcar observado" else "Marcar como observado"
+                        if (viewModel.isEventObserved) "Unmark as observed" else "Mark as observed"
                     }
                     
                     val buttonColor = if (isFuture) {
                         if (viewModel.isEventAgended) Color(0xFF451A1A) else Color(0xFF6366F1)
                     } else {
-                        if (viewModel.isEventObserved) Color(0xFF334155) else Color(0xFF10B981)
+                        if (viewModel.isEventObserved) Color(0xFF334155) else Color(0xFF6366F1)
                     }
                     
                     val contentColor = if (isFuture && viewModel.isEventAgended) Color(0xFFFCA5A5) else Color.White
@@ -313,16 +383,19 @@ fun EventDetailScreen(
                                 modifier = Modifier.size(18.dp)
                             )
                             Spacer(modifier = Modifier.width(8.dp))
-                            Text(text = "Crear quedada para este evento", fontWeight = FontWeight.Bold)
+                            Text(text = "Create meetup for this event", fontWeight = FontWeight.Bold)
                         }
                     }
                 }
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // Panel 2: Mi Agenda (Selectable)
-                val agendedEvents = collectibles.filter { it.agended == 1L }
-                if (agendedEvents.isNotEmpty()) {
+                // Panel 2: Mi Agenda (Future)
+                val allAgended = collectibles.filter { it.agended == 1L }
+                val futureAgended = allAgended.filter { it.eventId > now }
+                val pastAgended = allAgended.filter { it.eventId <= now }
+
+                if (futureAgended.isNotEmpty()) {
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -331,10 +404,10 @@ fun EventDetailScreen(
                             .border(1.dp, Color.White.copy(alpha = 0.1f), RoundedCornerShape(24.dp))
                             .padding(20.dp)
                     ) {
-                        Text("Mi Agenda", style = MaterialTheme.typography.titleMedium, color = Color(0xFF818CF8), fontWeight = FontWeight.Bold)
+                        Text("My Agenda", style = MaterialTheme.typography.titleMedium, color = Color(0xFF818CF8), fontWeight = FontWeight.Bold)
                         Spacer(modifier = Modifier.height(12.dp))
 
-                        agendedEvents.forEach { agendaItem ->
+                        futureAgended.forEach { agendaItem ->
                             Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
@@ -378,12 +451,90 @@ fun EventDetailScreen(
                                         )
                                     }
                                 }
-                                androidx.compose.material3.Icon(
-                                    imageVector = Icons.AutoMirrored.Filled.ArrowForward,
-                                    contentDescription = null,
-                                    tint = Color(0xFF475569),
-                                    modifier = Modifier.size(16.dp)
-                                )
+                                IconButton(
+                                    onClick = { eventToRemoveFromAgenda = agendaItem },
+                                    modifier = Modifier.size(32.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Filled.Delete,
+                                        contentDescription = "Remove",
+                                        tint = Color(0xFFFCA5A5),
+                                        modifier = Modifier.size(20.dp)
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+
+                if (pastAgended.isNotEmpty()) {
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(24.dp))
+                            .background(Color(0xFF1E293B).copy(alpha = 0.7f))
+                            .border(1.dp, Color.White.copy(alpha = 0.1f), RoundedCornerShape(24.dp))
+                            .padding(20.dp)
+                    ) {
+                        Text("Past Events", style = MaterialTheme.typography.titleMedium, color = Color(0xFFA5B4FC), fontWeight = FontWeight.Bold)
+                        Spacer(modifier = Modifier.height(12.dp))
+
+                        pastAgended.forEach { agendaItem ->
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 6.dp)
+                                    .clip(RoundedCornerShape(16.dp))
+                                    .background(Color.White.copy(alpha = 0.05f))
+                                    .clickable {
+                                        onEventSelected(AstroEvent(
+                                            name = agendaItem.eventName,
+                                            date = agendaItem.observationDate,
+                                            description = "", 
+                                            timestamp = agendaItem.eventId,
+                                            type = com.app.astrojournal.data.model.EventType.OTHER
+                                        ))
+                                    }
+                                    .padding(12.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(40.dp)
+                                        .clip(CircleShape)
+                                        .background(Color(0xFF475569).copy(alpha = 0.3f)),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text("⏸️", fontSize = 16.sp)
+                                }
+                                Spacer(modifier = Modifier.width(16.dp))
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(text = agendaItem.eventName, color = Color(0xFFCBD5E1), style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
+                                    Text(text = agendaItem.observationDate, color = Color(0xFF64748B), style = MaterialTheme.typography.labelSmall)
+                                }
+                                IconButton(
+                                    onClick = { eventToMarkAsViewed = agendaItem },
+                                    modifier = Modifier.size(32.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Filled.Visibility,
+                                        contentDescription = "Mark as viewed",
+                                        tint = Color(0xFF6366F1),
+                                        modifier = Modifier.size(20.dp)
+                                    )
+                                }
+                                IconButton(
+                                    onClick = { eventToRemoveFromAgenda = agendaItem },
+                                    modifier = Modifier.size(32.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Filled.Delete,
+                                        contentDescription = "Remove",
+                                        tint = Color(0xFFFCA5A5),
+                                        modifier = Modifier.size(20.dp)
+                                    )
+                                }
                             }
                         }
                     }

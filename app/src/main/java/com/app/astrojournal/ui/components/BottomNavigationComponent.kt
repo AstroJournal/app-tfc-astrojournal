@@ -15,9 +15,9 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DarkMode
 import androidx.compose.material.icons.outlined.CalendarToday
-import androidx.compose.material.icons.outlined.FavoriteBorder
+import androidx.compose.material.icons.outlined.Visibility
 import androidx.compose.material.icons.outlined.PeopleOutline
-import androidx.compose.material.icons.outlined.PersonOutline
+import androidx.compose.material.icons.outlined.FormatListBulleted
 import androidx.compose.material.icons.outlined.StarOutline
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
@@ -96,16 +96,16 @@ fun AstroBottomNavigation(
                     onClick = { onNavigate("home") }
                 )
                 NavButton(
-                    icon = Icons.Outlined.FavoriteBorder,
-                    contentDescription = "Favorites",
-                    isSelected = false,
-                    onClick = { /* TODO */ }
+                    icon = Icons.Outlined.Visibility,
+                    contentDescription = "Observed",
+                    isSelected = currentScreen == "observed",
+                    onClick = { onNavigate("observed") }
                 )
                 NavButton(
-                    icon = Icons.Outlined.PersonOutline,
-                    contentDescription = "Profile",
-                    isSelected = false,
-                    onClick = { /* TODO */ }
+                    icon = Icons.Outlined.FormatListBulleted,
+                    contentDescription = "Agenda",
+                    isSelected = currentScreen == "eventDetail",
+                    onClick = { onNavigate("eventDetail") }
                 )
             }
         }

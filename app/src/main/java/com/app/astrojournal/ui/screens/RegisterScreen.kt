@@ -80,7 +80,7 @@ fun RegisterScreen(
             Spacer(modifier = Modifier.height(16.dp))
 
             Text(
-                text = "Crea tu cuenta en",
+                text = "Create your account on",
                 style = MaterialTheme.typography.titleMedium,
                 color = Color(0xFF94A3B8)
             )
@@ -104,7 +104,7 @@ fun RegisterScreen(
                     .padding(24.dp)
             ) {
                 Text(
-                    text = "Registro",
+                    text = "Register",
                     style = MaterialTheme.typography.titleLarge,
                     color = Color.White,
                     fontWeight = FontWeight.Bold,
@@ -125,7 +125,7 @@ fun RegisterScreen(
 
                 // Username field
                 Text(
-                    text = "Nombre de usuario",
+                    text = "Username",
                     style = MaterialTheme.typography.labelMedium,
                     color = Color(0xFF94A3B8)
                 )
@@ -185,7 +185,7 @@ fun RegisterScreen(
 
                 // Password field
                 Text(
-                    text = "Contraseña",
+                    text = "Password",
                     style = MaterialTheme.typography.labelMedium,
                     color = Color(0xFF94A3B8)
                 )
@@ -216,7 +216,7 @@ fun RegisterScreen(
 
                 // Repeat Password field
                 Text(
-                    text = "Repetir Contraseña",
+                    text = "Repeat Password",
                     style = MaterialTheme.typography.labelMedium,
                     color = Color(0xFF94A3B8)
                 )
@@ -267,7 +267,7 @@ fun RegisterScreen(
                         )
                     } else {
                         Text(
-                            text = "Registrarse",
+                            text = "Sign up",
                             fontWeight = FontWeight.Bold,
                             fontSize = 16.sp
                         )
@@ -281,7 +281,7 @@ fun RegisterScreen(
                     modifier = Modifier.align(Alignment.CenterHorizontally)
                 ) {
                     Text(
-                        text = "¿Ya tienes cuenta? Inicia sesión",
+                        text = "Already have an account? Log in",
                         color = Color(0xFF818CF8),
                         style = MaterialTheme.typography.bodyMedium
                     )
