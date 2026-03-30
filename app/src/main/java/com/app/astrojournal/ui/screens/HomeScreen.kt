@@ -36,10 +36,9 @@ import androidx.compose.ui.graphics.Brush
 import com.app.astrojournal.ui.viewmodels.HomeViewModel
 import com.app.astrojournal.ui.viewmodels.UiState
 import com.app.astrojournal.R
-import com.app.astrojournal.ui.screens.ComingWeek
+import androidx.compose.material.icons.Icons
 import androidx.compose.ui.zIndex
 import com.app.astrojournal.data.model.AstroEvent
-import androidx.compose.ui.platform.testTag
 
 
 // Colors from Design
@@ -61,6 +60,7 @@ private val localeEnglish = Locale.ENGLISH
 @Composable
 fun HomeScreen(
     viewModel: HomeViewModel,
+    eventOfTheDayViewModel: com.app.astrojournal.ui.viewmodels.EventOfTheDayViewModel? = null,
     currentScreen: String = "home",
     onNavigate: (String) -> Unit = {},
     onEventSelected: (AstroEvent) -> Unit = {}
@@ -79,6 +79,7 @@ fun HomeScreen(
     }
 
     Scaffold(
+        topBar = { com.app.astrojournal.ui.components.AstroTopBar(onProfileClick = { onNavigate("profile") }) },
         bottomBar = { AstroBottomNavigation(currentScreen = currentScreen, onNavigate = onNavigate) },
         containerColor = BackgroundDark,
         contentColor = Color.White
@@ -117,9 +118,7 @@ fun HomeScreen(
                         ) {
                             androidx.compose.material3.CircularProgressIndicator(
                                 color = Indigo300,
-                                modifier = Modifier
-                                    .size(48.dp)
-                                    .testTag("home_loading_indicator")
+                                modifier = Modifier.size(48.dp)
                             )
                             Text(
                                 text = "Loading moon data...",
@@ -148,8 +147,7 @@ fun HomeScreen(
                                 style = MaterialTheme.typography.headlineMedium.copy(
                                     color = TextGray100,
                                     fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
-                                ),
-                                modifier = Modifier.testTag("home_error_title")
+                                )
                             )
                             Text(
                                 text = state.message,
@@ -160,8 +158,7 @@ fun HomeScreen(
                                 onClick = { viewModel.fetchMoonData() },
                                 colors = androidx.compose.material3.ButtonDefaults.buttonColors(
                                     containerColor = Indigo500
-                                ),
-                                modifier = Modifier.testTag("home_retry_button")
+                                )
                             ) {
                                 Text("Retry")
                             }
@@ -196,8 +193,19 @@ fun HomeScreen(
                         item { 
                             ComingWeek(
                                 selectedDate = selectedForecastDay?.date,
-                                onDateSelected = { setSelectedForecastDay(if (it.date == selectedForecastDay?.date) null else it) }
+                                onDateSelected = { setSelectedForecastDay(if (it.date == selectedForecastDay?.date) null else it) },
+                                onNavigateToCalendar = { onNavigate("calendar") }
                             ) 
+                        }
+                        
+                        // Today's Event compact card (APOD)
+                        eventOfTheDayViewModel?.let { eodVm ->
+                            item {
+                                TodayEventCard(
+                                    viewModel = eodVm,
+                                    onNavigateToEventOfTheDay = { onNavigate("eventOfTheDay") }
+                                )
+                            }
                         }
                         
                         // Lista de eventos astronómicos dinámicos
@@ -212,7 +220,7 @@ fun HomeScreen(
 
 @Composable
 fun SelectedForecastHeader(day: com.app.astrojournal.data.model.WeeklyMoonDay) {
-    val phaseNameEs = getPhaseNameInSpanish(day.phase)
+    val phaseNameEs = com.app.astrojournal.utils.MoonUiUtils.getPhaseNameInSpanish(day.phase)
     
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -283,29 +291,16 @@ fun SelectedForecastHeader(day: com.app.astrojournal.data.model.WeeklyMoonDay) {
     }
 }
 
-// Helper: nombre de fase en español (Copinado de Calendar para consistencia)
-private fun getPhaseNameInSpanish(phaseName: String): String {
-    return when (phaseName) {
-        "New Moon" -> "Luna Nueva"
-        "Waxing Crescent" -> "Creciente Iluminante"
-        "First Quarter" -> "Cuarto Creciente"
-        "Waxing Gibbous" -> "Gibosa Creciente"
-        "Full Moon" -> "Luna Llena"
-        "Waning Gibbous" -> "Gibosa Menguante"
-        "Last Quarter" -> "Cuarto Menguante"
-        "Waning Crescent" -> "Creciente Menguante"
-        else -> phaseName
-    }
-}
+// Helper function removed and centralized in MoonUiUtils
 
 @Composable
 fun MoonHeader(moonData: com.app.astrojournal.data.model.Astro?) {
     if (moonData == null) return
 
-    val age = moonData.moon_age ?: 0.0
-    val illumination = moonData.moon_illumination ?: calculateIllumination(age).toString()
     val phaseName = moonData.moon_phase ?: "Full Moon"
-    val moonImageRes = getMoonPhaseImage(phaseName)
+    val moonImageRes = com.app.astrojournal.utils.MoonUiUtils.getMoonPhaseImage(phaseName)
+    val age = moonData.moon_age ?: 0.0
+    val illumination = moonData.moon_illumination ?: com.app.astrojournal.utils.MoonUiUtils.calculateIllumination(age).toString()
 
 
     Column(
@@ -363,45 +358,5 @@ fun MoonHeader(moonData: com.app.astrojournal.data.model.Astro?) {
     }
 }
 
-
-
-fun getPhaseFromMoonAge(age: Double): String = when {
-    age < 1.8 -> "New Moon"
-    age < 5.5 -> "Waxing Crescent"
-    age < 9.2 -> "First Quarter"
-    age < 12.9 -> "Waxing Gibbous"
-    age < 16.6 -> "Full Moon"
-    age < 20.3 -> "Waning Gibbous"
-    age < 24.1 -> "Last Quarter"
-    else -> "Waning Crescent"
-}
-
-// -----------------------------
-// Mapea nombre de fase a imagen
-// -----------------------------
-fun getMoonPhaseImage(phaseName: String): Int {
-    return when (phaseName.lowercase().replace(" ", "_")) {
-        "new_moon" -> R.drawable.new_moon
-        "waxing_crescent" -> R.drawable.waxing_crescent
-        "first_quarter" -> R.drawable.first_quarter
-        "waxing_gibbous" -> R.drawable.waxing_gibbous
-        "full_moon" -> R.drawable.full_moon
-        "waning_gibbous" -> R.drawable.waning_gibbous
-        "last_quarter" -> R.drawable.third_quarter
-        "waning_crescent" -> R.drawable.waning_crescent
-        else -> R.drawable.full_moon
-    }
-}
-
-
-
-// -----------------------------
-// Iluminación aproximada de la luna
-// -----------------------------
-fun calculateIllumination(age: Double): Int {
-    // Simple: 0-14 días creciente, 14-29 decreciente
-    return if (age <= 14.0) ((age / 14.0) * 100).toInt()
-    else (100 - ((age - 14) / 15.53 * 100)).toInt()
-}
 
 

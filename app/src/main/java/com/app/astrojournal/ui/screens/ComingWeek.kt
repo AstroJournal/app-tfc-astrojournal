@@ -23,7 +23,8 @@ import java.time.LocalDate
 @Composable
 fun ComingWeek(
     selectedDate: LocalDate?,
-    onDateSelected: (WeeklyMoonDay) -> Unit
+    onDateSelected: (WeeklyMoonDay) -> Unit,
+    onNavigateToCalendar: (() -> Unit)? = null
 ) {
     val forecast = generateWeeklyMoonForecast()
 
@@ -34,12 +35,25 @@ fun ComingWeek(
             .border(1.dp, White10, RoundedCornerShape(16.dp))
             .padding(16.dp)
     ) {
-        Text(
-            text = "7-DAY FORECAST",
-            color = Indigo200,
-            style = MaterialTheme.typography.labelSmall,
-            modifier = Modifier.padding(bottom = 12.dp)
-        )
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "7-DAY FORECAST",
+                color = Indigo200,
+                style = MaterialTheme.typography.labelSmall
+            )
+            if (onNavigateToCalendar != null) {
+                Text(
+                    text = "Full calendar →",
+                    color = Indigo300,
+                    style = MaterialTheme.typography.labelSmall,
+                    modifier = Modifier.clickable { onNavigateToCalendar() }
+                )
+            }
+        }
 
         Row(
             modifier = Modifier.fillMaxWidth(),

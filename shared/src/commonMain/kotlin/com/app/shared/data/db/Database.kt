@@ -6,4 +6,5 @@ import com.astrojournal.shared.data.db.DatabaseDriverFactory
 class Database(databaseDriverFactory: DatabaseDriverFactory) {
     private val database = AstrojournalDatabase(databaseDriverFactory.createDriver())
     val collectibleQueries = database.collectibleQueries
+    val userQueries = database.userQueries
 }
