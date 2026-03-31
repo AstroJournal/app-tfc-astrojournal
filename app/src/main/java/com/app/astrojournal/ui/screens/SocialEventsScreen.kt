@@ -97,7 +97,7 @@ fun SocialEventsScreen(
                 
                 // Header
                 Text(
-                    text = "Astronomical Events",
+                    text = "Astronomical Meetups",
                     style = MaterialTheme.typography.headlineMedium.copy(
                         fontWeight = FontWeight.Bold,
                         color = Color.White
