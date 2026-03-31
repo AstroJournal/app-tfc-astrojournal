@@ -48,7 +48,7 @@ fun TodayEventCard(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = "Today's Event",
+                text = "Today's Historical Event",
                 style = MaterialTheme.typography.titleMedium.copy(
                     color = TextGray100,
                     fontWeight = FontWeight.Bold
