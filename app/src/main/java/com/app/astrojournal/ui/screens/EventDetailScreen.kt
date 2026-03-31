@@ -23,6 +23,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
@@ -48,6 +49,8 @@ import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.ExpandLess
+import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.People
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Visibility
@@ -60,8 +63,13 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.app.astrojournal.R
 import com.app.astrojournal.data.model.AstroEvent
+import com.app.astrojournal.data.model.VisibilityUi
+import com.app.astrojournal.data.repository.SpaceRepository
 import com.app.astrojournal.ui.components.AstroBottomNavigation
 import com.app.astrojournal.ui.viewmodels.EventDetailViewModel
+import com.app.astrojournal.ui.viewmodels.RemoteUiState
+import kotlinx.coroutines.delay
+import java.time.LocalDate
 
 @Composable
 fun EventDetailScreen(
@@ -73,6 +81,9 @@ fun EventDetailScreen(
 ) {
     val collectibles = viewModel.collectibles
     var noteInput by remember { mutableStateOf("") }
+    var visibilityExpanded by remember { mutableStateOf(false) }
+    var showAddedMessage by remember { mutableStateOf(false) }
+    var previousAgendedState by remember { mutableStateOf(viewModel.isEventAgended) }
     val scrollState = rememberScrollState()
     val focusManager = LocalFocusManager.current
     val now = System.currentTimeMillis()
@@ -144,10 +155,36 @@ fun EventDetailScreen(
     val eventId = event.timestamp
     val isFuture = event.timestamp > System.currentTimeMillis()
 
+    val visibilityState = androidx.compose.runtime.produceState<RemoteUiState<VisibilityUi>>(
+        initialValue = RemoteUiState.Loading,
+        key1 = Unit
+    ) {
+        val repository = SpaceRepository()
+        value = runCatching { repository.getVisibilityWithFallback(LocalDate.now()) }
+            .fold(
+                onSuccess = { RemoteUiState.Success(it) },
+                onFailure = { RemoteUiState.Error("Information not available") }
+            )
+    }.value
+
     // Keep the status in sync and initialize note input
     LaunchedEffect(collectibles) {
         viewModel.updateEventStatus(eventId)
         noteInput = viewModel.currentEventNote
+    }
+
+    LaunchedEffect(viewModel.isEventAgended, isFuture) {
+        if (isFuture && viewModel.isEventAgended && !previousAgendedState) {
+            showAddedMessage = true
+        }
+        previousAgendedState = viewModel.isEventAgended
+    }
+
+    LaunchedEffect(showAddedMessage) {
+        if (showAddedMessage) {
+            delay(2500)
+            showAddedMessage = false
+        }
     }
 
     Scaffold(
@@ -181,15 +218,24 @@ fun EventDetailScreen(
             ) {
                 Spacer(modifier = Modifier.height(24.dp))
 
+                EventDetailVisibilitySection(
+                    state = visibilityState,
+                    expanded = visibilityExpanded,
+                    onToggleExpanded = { visibilityExpanded = !visibilityExpanded }
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
                 // Panel 1: Event Info, Integrated Notes & Action
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(24.dp))
-                        .background(Color(0xFF1E293B).copy(alpha = 0.7f))
-                        .border(1.dp, Color.White.copy(alpha = 0.1f), RoundedCornerShape(24.dp))
-                        .padding(20.dp)
-                ) {
+                if (!(isFuture && viewModel.isEventAgended)) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(24.dp))
+                            .background(Color(0xFF1E293B).copy(alpha = 0.7f))
+                            .border(1.dp, Color.White.copy(alpha = 0.1f), RoundedCornerShape(24.dp))
+                            .padding(20.dp)
+                    ) {
                     Text(
                         text = event.name,
                         style = MaterialTheme.typography.titleLarge,
@@ -200,6 +246,11 @@ fun EventDetailScreen(
                         text = event.date,
                         style = MaterialTheme.typography.bodyMedium,
                         color = Color(0xFF94A3B8)
+                    )
+                    Text(
+                        text = getCountdownText(event.timestamp),
+                        style = MaterialTheme.typography.labelMedium,
+                        color = Color(0xFF818CF8)
                     )
                     
                     if (event.description.isNotBlank()) {
@@ -286,6 +337,32 @@ fun EventDetailScreen(
                         }
                     }
 
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text(
+                            text = "Mark as observed",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = Color(0xFFCBD5E1)
+                        )
+                        Checkbox(
+                            checked = viewModel.isEventObserved,
+                            onCheckedChange = { checked ->
+                                viewModel.saveFullEventState(
+                                    eventId = eventId,
+                                    eventName = event.name,
+                                    date = event.date,
+                                    note = noteInput,
+                                    agended = viewModel.isEventAgended,
+                                    observed = checked
+                                )
+                            }
+                        )
+                    }
+
                     Spacer(modifier = Modifier.height(16.dp))
 
                     // Integrated Action Button
@@ -363,28 +440,51 @@ fun EventDetailScreen(
                     Spacer(modifier = Modifier.height(12.dp))
 
                     // Connect to Social Events Feature
-                    Button(
-                        onClick = {
-                            // Enviar el nombre del evento como parámetro en la navegación a social
-                            onNavigate("social?initialEventName=${event.name}")
-                        },
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = Color(0xFF1E293B), // Background dark
-                            contentColor = Color(0xFFA5B4FC)    // Indigo pale
-                        ),
-                        shape = RoundedCornerShape(12.dp),
-                        border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF6366F1).copy(alpha = 0.5f))
-                    ) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            androidx.compose.material3.Icon(
-                                imageVector = Icons.Filled.People,
-                                contentDescription = null,
-                                modifier = Modifier.size(18.dp)
-                            )
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text(text = "Create meetup for this event", fontWeight = FontWeight.Bold)
+                        Button(
+                            onClick = {
+                                // Enviar el nombre del evento como parámetro en la navegación a social
+                                onNavigate("social?initialEventName=${event.name}")
+                            },
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = Color(0xFF1E293B), // Background dark
+                                contentColor = Color(0xFFA5B4FC)    // Indigo pale
+                            ),
+                            shape = RoundedCornerShape(12.dp),
+                            border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF6366F1).copy(alpha = 0.5f))
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                androidx.compose.material3.Icon(
+                                    imageVector = Icons.Filled.People,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(text = "Create meetup for this event", fontWeight = FontWeight.Bold)
+                            }
                         }
+                    }
+                } else if (showAddedMessage) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(24.dp))
+                            .background(Color(0xFF1E293B).copy(alpha = 0.7f))
+                            .border(1.dp, Color.White.copy(alpha = 0.1f), RoundedCornerShape(24.dp))
+                            .padding(20.dp)
+                    ) {
+                        Text(
+                            text = "Event added to your agenda",
+                            style = MaterialTheme.typography.titleMedium,
+                            color = Color(0xFFA5B4FC),
+                            fontWeight = FontWeight.Bold
+                        )
+                        Spacer(modifier = Modifier.height(6.dp))
+                        Text(
+                            text = "${event.name} now appears below in My Agenda.",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = Color(0xFFCBD5E1)
+                        )
                     }
                 }
 
@@ -439,6 +539,11 @@ fun EventDetailScreen(
                                 Column(modifier = Modifier.weight(1f)) {
                                     Text(text = agendaItem.eventName, color = Color.White, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
                                     Text(text = agendaItem.observationDate, color = Color(0xFF94A3B8), style = MaterialTheme.typography.labelSmall)
+                                    Text(
+                                        text = getCountdownText(agendaItem.eventId),
+                                        color = Color(0xFF818CF8),
+                                        style = MaterialTheme.typography.labelSmall
+                                    )
                                     
                                     if (!agendaItem.notes.isNullOrBlank()) {
                                         Spacer(modifier = Modifier.height(4.dp))
@@ -451,6 +556,19 @@ fun EventDetailScreen(
                                         )
                                     }
                                 }
+                                Checkbox(
+                                    checked = agendaItem.observed == 1L,
+                                    onCheckedChange = { checked ->
+                                        viewModel.saveFullEventState(
+                                            eventId = agendaItem.eventId,
+                                            eventName = agendaItem.eventName,
+                                            date = agendaItem.observationDate,
+                                            note = agendaItem.notes ?: "",
+                                            agended = true,
+                                            observed = checked
+                                        )
+                                    }
+                                )
                                 IconButton(
                                     onClick = { eventToRemoveFromAgenda = agendaItem },
                                     modifier = Modifier.size(32.dp)
@@ -512,18 +630,25 @@ fun EventDetailScreen(
                                 Column(modifier = Modifier.weight(1f)) {
                                     Text(text = agendaItem.eventName, color = Color(0xFFCBD5E1), style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
                                     Text(text = agendaItem.observationDate, color = Color(0xFF64748B), style = MaterialTheme.typography.labelSmall)
-                                }
-                                IconButton(
-                                    onClick = { eventToMarkAsViewed = agendaItem },
-                                    modifier = Modifier.size(32.dp)
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Filled.Visibility,
-                                        contentDescription = "Mark as viewed",
-                                        tint = Color(0xFF6366F1),
-                                        modifier = Modifier.size(20.dp)
+                                    Text(
+                                        text = getCountdownText(agendaItem.eventId),
+                                        color = Color(0xFF818CF8),
+                                        style = MaterialTheme.typography.labelSmall
                                     )
                                 }
+                                Checkbox(
+                                    checked = agendaItem.observed == 1L,
+                                    onCheckedChange = { checked ->
+                                        viewModel.saveFullEventState(
+                                            eventId = agendaItem.eventId,
+                                            eventName = agendaItem.eventName,
+                                            date = agendaItem.observationDate,
+                                            note = agendaItem.notes ?: "",
+                                            agended = true,
+                                            observed = checked
+                                        )
+                                    }
+                                )
                                 IconButton(
                                     onClick = { eventToRemoveFromAgenda = agendaItem },
                                     modifier = Modifier.size(32.dp)
@@ -546,4 +671,86 @@ fun EventDetailScreen(
     }
 }
 
+@Composable
+private fun EventDetailVisibilitySection(
+    state: RemoteUiState<VisibilityUi>,
+    expanded: Boolean,
+    onToggleExpanded: () -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(24.dp))
+            .background(Color(0xFF1E293B).copy(alpha = 0.7f))
+            .border(1.dp, Color.White.copy(alpha = 0.1f), RoundedCornerShape(24.dp))
+            .clickable { onToggleExpanded() }
+            .padding(16.dp)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "Visibility",
+                color = Color(0xFFA5B4FC),
+                style = MaterialTheme.typography.labelLarge,
+                fontWeight = FontWeight.Medium
+            )
+            Icon(
+                imageVector = if (expanded) Icons.Filled.ExpandLess else Icons.Filled.ExpandMore,
+                contentDescription = null,
+                tint = Color(0xFF818CF8)
+            )
+        }
 
+        if (expanded) {
+            Spacer(modifier = Modifier.height(8.dp))
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(Color(0xFF0F172A).copy(alpha = 0.65f))
+                    .padding(12.dp)
+            ) {
+                when (state) {
+                    is RemoteUiState.Loading -> Text(
+                        text = "Calculating...",
+                        color = Color(0xFFCBD5E1),
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+
+                    is RemoteUiState.Error -> Text(
+                        text = "Information not available",
+                        color = Color(0xFF94A3B8),
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+
+                    is RemoteUiState.Success -> {
+                        val data = state.data
+                        Column {
+                            Text(
+                                if (data.isObservable) "Observable" else "Limited visibility",
+                                color = Color(0xFF818CF8),
+                                fontWeight = FontWeight.Bold,
+                                style = MaterialTheme.typography.bodyMedium
+                            )
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(
+                                text = "Window: ${data.window}",
+                                color = Color(0xFFCBD5E1),
+                                style = MaterialTheme.typography.bodyMedium
+                            )
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(
+                                text = data.message,
+                                color = Color(0xFFCBD5E1),
+                                style = MaterialTheme.typography.bodyMedium
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
