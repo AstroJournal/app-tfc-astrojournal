@@ -140,7 +140,7 @@ private fun EventOfDayApodSection(
             .padding(16.dp)
     ) {
         Text(
-            text = "Today's Event",
+            text = "Today's Historical Event",
             style = MaterialTheme.typography.titleMedium,
             color = Color(0xFFA5B4FC),
             fontWeight = FontWeight.Bold,

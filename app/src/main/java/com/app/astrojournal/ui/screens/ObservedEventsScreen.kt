@@ -9,11 +9,16 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material.icons.outlined.Visibility
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -36,10 +41,56 @@ fun ObservedEventsScreen(
     onNavigate: (String) -> Unit = {}
 ) {
     val observed = viewModel.observed.collectAsState()
+    var editingNoteFor by remember { mutableStateOf<Collectible?>(null) }
 
     // Reload every time this screen is shown so newly observed events appear
     LaunchedEffect(Unit) {
         viewModel.load()
+    }
+
+    if (editingNoteFor != null) {
+        var noteText by remember { mutableStateOf(editingNoteFor?.notes ?: "") }
+        AlertDialog(
+            onDismissRequest = { editingNoteFor = null },
+            title = {
+                Text(
+                    text = "Edit Note",
+                    style = MaterialTheme.typography.titleMedium.copy(color = TextGray100)
+                )
+            },
+            text = {
+                OutlinedTextField(
+                    value = noteText,
+                    onValueChange = { noteText = it },
+                    label = { Text("Note") },
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = Indigo500,
+                        unfocusedBorderColor = White10,
+                        focusedLabelColor = Indigo300,
+                        unfocusedLabelColor = TextGray400,
+                        focusedTextColor = TextGray100,
+                        unfocusedTextColor = TextGray100
+                    )
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    viewModel.updateNote(editingNoteFor!!.id, noteText)
+                    editingNoteFor = null
+                }) {
+                    Text("Save", color = Indigo300)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { editingNoteFor = null }) {
+                    Text("Cancel", color = TextGray400)
+                }
+            },
+            containerColor = BackgroundDark,
+            titleContentColor = Color.White,
+            textContentColor = Color.White
+        )
     }
 
     Scaffold(
@@ -115,7 +166,10 @@ fun ObservedEventsScreen(
                     }
                 } else {
                     items(observed.value) { collectible ->
-                        ObservedEventItem(collectible = collectible)
+                        ObservedEventItem(
+                            collectible = collectible,
+                            onEditClick = { editingNoteFor = collectible }
+                        )
                     }
                 }
             }
@@ -124,7 +178,10 @@ fun ObservedEventsScreen(
 }
 
 @Composable
-fun ObservedEventItem(collectible: Collectible) {
+fun ObservedEventItem(
+    collectible: Collectible,
+    onEditClick: () -> Unit
+) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -170,6 +227,14 @@ fun ObservedEventItem(collectible: Collectible) {
                     )
                 }
             }
+        }
+
+        IconButton(onClick = onEditClick) {
+            Icon(
+                imageVector = Icons.Outlined.Edit,
+                contentDescription = "Edit Note",
+                tint = TextGray400
+            )
         }
     }
 }

@@ -27,4 +27,13 @@ class ObservedEventsViewModel(
             _observed.value = all.filter { it.observed == 1L }
         }
     }
+
+    fun updateNote(id: Long, note: String) {
+        viewModelScope.launch {
+            withContext(Dispatchers.IO) {
+                repo.updateNotes(id, note.ifBlank { null })
+            }
+            load()
+        }
+    }
 }
