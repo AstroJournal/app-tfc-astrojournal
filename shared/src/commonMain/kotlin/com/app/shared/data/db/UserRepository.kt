@@ -40,6 +40,11 @@ class UserRepository(
         }
     }
 
+    fun updatePassword(id: Long, newPasswordHash: String) {
+        // El orden de SQLDelight es (password, id) basado en el archivo .sq
+        queries.updatePassword(newPasswordHash, id)
+    }
+
     fun findByCredentials(email: String, passwordHash: String): User? {
         return queries.selectByCredentials(email, passwordHash).executeAsOneOrNull()
     }

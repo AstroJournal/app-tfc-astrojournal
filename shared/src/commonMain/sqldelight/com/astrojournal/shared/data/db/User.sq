@@ -22,5 +22,8 @@ insertUser:
 INSERT INTO user(username, email, password, createdAt)
 VALUES (?, ?, ?, ?);
 
+updatePassword:
+UPDATE user SET password = ? WHERE id = ?;
+
 deleteById:
 DELETE FROM user WHERE id = ?;
