@@ -15,19 +15,15 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.Stars
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
+import androidx.compose.material.icons.filled.*
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -37,21 +33,41 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.app.astrojournal.R
+import com.app.astrojournal.di.AppModule
 import com.app.astrojournal.ui.components.AstroBottomNavigation
 import com.app.astrojournal.ui.viewmodels.ObservedEventsViewModel
 
 @Composable
 fun ProfileScreen(
-    viewModel: ObservedEventsViewModel,
-    username: String = "Astro User", // Nuevo parámetro para el nombre real
+    viewModel: ObservedEventsViewModel = viewModel(
+        factory = object : ViewModelProvider.Factory {
+            @Suppress("UNCHECKED_CAST")
+            override fun <T : ViewModel> create(modelClass: Class<T>): T {
+                return ObservedEventsViewModel(AppModule.collectibleRepository) as T
+            }
+        }
+    ),
+    username: String = "Astro User",
+    email: String = "usuario@ejemplo.com",
+    password: String = "",
+    onUpdatePassword: (String) -> Unit = {},
     currentScreen: String = "profile",
     onNavigate: (String) -> Unit = {}
 ) {
     val observedEvents by viewModel.observed.collectAsState()
     val count = observedEvents.size
+    val scrollState = rememberScrollState() // Estado para el scroll
+
+    var isEditingPassword by remember { mutableStateOf(false) }
+    var passwordText by remember { mutableStateOf("") }
+    var showPassword by remember { mutableStateOf(false) }
 
     val (rank, rankColor) = when {
         count <= 5 -> "Casual Observer" to Indigo200
@@ -85,12 +101,14 @@ fun ProfileScreen(
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .verticalScroll(rememberScrollState())
-                    .padding(horizontal = 24.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
+                    .padding(innerPadding)
+                    .padding(horizontal = 24.dp)
+                    .verticalScroll(scrollState), // Habilitamos el scroll aquí
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Top
             ) {
-                Spacer(modifier = Modifier.height(innerPadding.calculateTopPadding() + 48.dp))
-                
+                Spacer(modifier = Modifier.height(40.dp))
+
                 // Avatar Placeholder
                 Box(
                     modifier = Modifier
@@ -121,51 +139,99 @@ fun ProfileScreen(
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Text(
-                        text = username, // Usamos el nombre pasado por parámetro
+                        text = username,
                         style = MaterialTheme.typography.headlineSmall.copy(
                             fontWeight = FontWeight.Bold,
                             color = TextGray100
                         )
                     )
-                    
-                    Spacer(modifier = Modifier.height(8.dp))
-                    
+
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.padding(top = 4.dp)
+                    ) {
+                        Icon(Icons.Default.Email, null, modifier = Modifier.size(14.dp), tint = TextGray400)
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(
+                            text = email,
+                            style = MaterialTheme.typography.bodyMedium.copy(color = TextGray400)
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
                     Text(
                         text = "Observed events: $count",
                         style = MaterialTheme.typography.bodyMedium.copy(color = TextGray400)
                     )
 
-                    Spacer(modifier = Modifier.height(24.dp))
+                    Spacer(modifier = Modifier.height(16.dp))
 
+                    // Rank
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         modifier = Modifier
-                            .background(
-                                color = rankColor.copy(alpha = 0.1f),
-                                shape = RoundedCornerShape(12.dp)
-                            )
+                            .background(rankColor.copy(alpha = 0.1f), RoundedCornerShape(12.dp))
                             .border(1.dp, rankColor.copy(alpha = 0.3f), RoundedCornerShape(12.dp))
                             .padding(horizontal = 16.dp, vertical = 8.dp)
                     ) {
-                        Icon(
-                            imageVector = Icons.Default.Stars,
-                            contentDescription = null,
-                            tint = rankColor,
-                            modifier = Modifier.size(20.dp)
-                        )
+                        Icon(Icons.Default.Stars, null, tint = rankColor, modifier = Modifier.size(20.dp))
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text(
-                            text = rank.uppercase(),
-                            style = MaterialTheme.typography.labelLarge.copy(
-                                color = rankColor,
-                                fontWeight = FontWeight.ExtraBold,
-                                letterSpacing = 1.sp
+                        Text(text = rank.uppercase(), style = MaterialTheme.typography.labelLarge.copy(color = rankColor, fontWeight = FontWeight.ExtraBold))
+                    }
+
+                    Spacer(modifier = Modifier.height(32.dp))
+
+                    // Password Section
+                    Column(modifier = Modifier.fillMaxWidth()) {
+                        Text("Seguridad", style = MaterialTheme.typography.labelLarge.copy(color = Indigo300, fontWeight = FontWeight.Bold))
+                        Spacer(modifier = Modifier.height(12.dp))
+
+                        if (!isEditingPassword) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .background(White10, RoundedCornerShape(12.dp))
+                                    .padding(16.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text("Contraseña actual", style = MaterialTheme.typography.labelSmall, color = TextGray400)
+                                    Text(
+                                        text = if (showPassword) password.ifEmpty { "(No disponible)" } else "••••••••",
+                                        style = MaterialTheme.typography.bodyLarge,
+                                        color = Color.White
+                                    )
+                                }
+                                Row {
+                                    IconButton(onClick = { showPassword = !showPassword }) {
+                                        Icon(if (showPassword) Icons.Default.VisibilityOff else Icons.Default.Visibility, null, tint = Indigo300)
+                                    }
+                                    IconButton(onClick = { isEditingPassword = true }) {
+                                        Icon(Icons.Default.Edit, null, tint = Indigo300)
+                                    }
+                                }
+                            }
+                        } else {
+                            OutlinedTextField(
+                                value = passwordText,
+                                onValueChange = { passwordText = it },
+                                label = { Text("Nueva Contraseña", color = TextGray400) },
+                                visualTransformation = PasswordVisualTransformation(),
+                                modifier = Modifier.fillMaxWidth(),
+                                singleLine = true,
+                                colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = Indigo500, unfocusedBorderColor = White10, focusedTextColor = Color.White, unfocusedTextColor = Color.White)
                             )
-                        )
+                            Spacer(modifier = Modifier.height(12.dp))
+                            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                Button(onClick = { if (passwordText.length >= 6) { onUpdatePassword(passwordText); isEditingPassword = false; passwordText = "" } }, modifier = Modifier.weight(1f), colors = ButtonDefaults.buttonColors(containerColor = Indigo500)) { Text("Guardar") }
+                                TextButton(onClick = { isEditingPassword = false }, modifier = Modifier.weight(1f)) { Text("Cancelar", color = TextGray400) }
+                            }
+                        }
                     }
                 }
-                
-                Spacer(modifier = Modifier.height(innerPadding.calculateBottomPadding() + 48.dp))
+                Spacer(modifier = Modifier.height(32.dp)) // Espacio final para que el scroll respire
             }
         }
     }

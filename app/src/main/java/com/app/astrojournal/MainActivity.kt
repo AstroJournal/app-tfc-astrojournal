@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.size
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.ViewModel
 import androidx.compose.foundation.layout.Box
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Modifier
 import com.app.astrojournal.data.model.AstroEvent
 import com.app.astrojournal.di.AppModule
@@ -25,7 +26,6 @@ import com.app.astrojournal.ui.screens.LoginScreen
 import com.app.astrojournal.ui.screens.RegisterScreen
 import com.app.astrojournal.ui.screens.ObservedEventsScreen
 import com.app.astrojournal.ui.screens.SocialEventsScreen
-import com.app.astrojournal.ui.screens.ProfileScreen
 import com.app.astrojournal.ui.viewmodels.CalendarViewModel
 import com.app.astrojournal.ui.viewmodels.EventDetailViewModel
 import com.app.astrojournal.ui.viewmodels.EventOfTheDayViewModel
@@ -94,6 +94,9 @@ class MainActivity : ComponentActivity() {
 
                 var initialAstroEventNameForSocial by remember { mutableStateOf<String?>(null) }
                 
+                val loggedInUser by loginViewModel.loggedInUser.collectAsState()
+                val plainPassword by loginViewModel.plainPassword.collectAsState()
+
                 fun navigateTo(destination: String) {
                     if (destination == "eventDetail") {
                         if (selectedEvent == null) {
@@ -182,8 +185,12 @@ class MainActivity : ComponentActivity() {
                             currentScreen = "home"
                         }
                     }
-                    currentScreen == "profile" -> ProfileScreen(
+                    currentScreen == "profile" -> com.app.astrojournal.ui.screens.ProfileScreen(
                         viewModel = observedEventsViewModel,
+                        username = loggedInUser?.username ?: "Astro User",
+                        email = loggedInUser?.email ?: "usuario@ejemplo.com",
+                        password = plainPassword, // <--- Aquí pasamos la contraseña real
+                        onUpdatePassword = { loginViewModel.updatePassword(it) },
                         currentScreen = currentScreen,
                         onNavigate = { navigateTo(it) }
                     )
