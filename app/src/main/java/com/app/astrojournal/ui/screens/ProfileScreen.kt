@@ -52,9 +52,9 @@ fun ProfileScreen(
     val count = observedEvents.size
 
     val (rank, rankColor) = when {
-        count <= 5 -> "observador esporádico" to Indigo200
-        count in 6..10 -> "observador frecuente" to Indigo300
-        else -> "observador veterano" to Color(0xFFFCD34D)
+        count <= 5 -> "Casual Observer" to Indigo200
+        count in 6..10 -> "Frequent Observer" to Indigo300
+        else -> "Veteran Observer" to Color(0xFFFCD34D)
     }
 
     Scaffold(
@@ -128,7 +128,7 @@ fun ProfileScreen(
                     Spacer(modifier = Modifier.height(8.dp))
                     
                     Text(
-                        text = "Eventos observados: $count",
+                        text = "Observed events: $count",
                         style = MaterialTheme.typography.bodyMedium.copy(color = TextGray400)
                     )
 

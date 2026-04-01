@@ -22,18 +22,18 @@
 > Task :shared:checkKotlinGradlePluginConfigurationErrors SKIPPED
 > Task :shared:generateCommonMainAstrojournalDatabaseInterface UP-TO-DATE
 > Task :app:javaPreCompileDebug UP-TO-DATE
-> Task :app:processDebugManifestForPackage
 > Task :app:preDebugUnitTestBuild UP-TO-DATE
-> Task :app:javaPreCompileDebugUnitTest
+> Task :app:javaPreCompileDebugUnitTest UP-TO-DATE
+> Task :app:processDebugManifestForPackage
 > Task :app:processDebugResources
 
 > Task :shared:compileAndroidMain
 w: file:///D:/Users/Documentos/UNIR/SEGUNDO/Proyecto_intermodular/Repositorio_Astrojournal/app-tfc-astrojournal/shared/src/androidMain/kotlin/com/app/shared/data/db/DatabaseDriverFactory.kt:8:1 'expect'/'actual' classes (including interfaces, objects, annotations, enums, and 'actual' typealiases) are in Beta. You can use -Xexpect-actual-classes flag to suppress this warning. Also see: https://youtrack.jetbrains.com/issue/KT-61573
 w: file:///D:/Users/Documentos/UNIR/SEGUNDO/Proyecto_intermodular/Repositorio_Astrojournal/app-tfc-astrojournal/shared/src/commonMain/kotlin/com/app/shared/data/db/DatabaseDriverFactory.kt:5:1 'expect'/'actual' classes (including interfaces, objects, annotations, enums, and 'actual' typealiases) are in Beta. You can use -Xexpect-actual-classes flag to suppress this warning. Also see: https://youtrack.jetbrains.com/issue/KT-61573
 
+> Task :shared:bundleAndroidMainClassesToRuntimeJar UP-TO-DATE
 > Task :shared:processAndroidMainJavaRes UP-TO-DATE
 > Task :shared:bundleAndroidMainClassesToCompileJar
-> Task :shared:bundleAndroidMainClassesToRuntimeJar
 
 > Task :app:compileDebugKotlin
 w: file:///D:/Users/Documentos/UNIR/SEGUNDO/Proyecto_intermodular/Repositorio_Astrojournal/app-tfc-astrojournal/app/src/main/java/com/app/astrojournal/ui/components/BottomNavigationComponent.kt:107:43 'val Icons.Outlined.FormatListBulleted: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Outlined.FormatListBulleted.
@@ -48,8 +48,8 @@ w: file:///D:/Users/Documentos/UNIR/SEGUNDO/Proyecto_intermodular/Repositorio_As
 > Task :app:bundleDebugClassesToCompileJar
 > Task :app:compileDebugUnitTestKotlin
 > Task :app:compileDebugUnitTestJavaWithJavac NO-SOURCE
-> Task :app:processDebugUnitTestJavaRes
+> Task :app:processDebugUnitTestJavaRes UP-TO-DATE
 > Task :app:testDebugUnitTest
 
-BUILD SUCCESSFUL in 19s
-32 actionable tasks: 14 executed, 18 up-to-date
+BUILD SUCCESSFUL in 12s
+32 actionable tasks: 11 executed, 21 up-to-date
