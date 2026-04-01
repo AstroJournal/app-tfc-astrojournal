@@ -183,8 +183,8 @@ fun LoginScreen(
                         val validEmail = android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()
                         val validPassword = password.isNotBlank()
                         localError = when {
-                            !validEmail -> "Formato de email inválido"
-                            !validPassword -> "La contraseña es obligatoria"
+                            !validEmail -> "Invalid email format"
+                            !validPassword -> "Password is required"
                             else -> null
                         }
                         if (localError == null) {

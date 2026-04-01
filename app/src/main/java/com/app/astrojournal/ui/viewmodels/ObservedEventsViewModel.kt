@@ -36,4 +36,13 @@ class ObservedEventsViewModel(
             load()
         }
     }
+
+    fun unmarkAsObserved(id: Long) {
+        viewModelScope.launch {
+            withContext(Dispatchers.IO) {
+                repo.updateObserved(id, 0)
+            }
+            load()
+        }
+    }
 }

@@ -300,9 +300,9 @@ fun RegisterScreen(
                         val isEmailValid = android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()
                         val passwordsValid = password.isNotBlank() && repeatPassword.isNotBlank() && password == repeatPassword
 
-                        usernameError = if (isUsernameValid) null else "El nombre de usuario no puede estar vacío"
-                        emailError = if (isEmailValid) null else "Formato de email inválido"
-                        passwordError = if (passwordsValid) null else "Las contraseñas no coinciden o están vacías"
+                        usernameError = if (isUsernameValid) null else "Username cannot be empty"
+                        emailError = if (isEmailValid) null else "Invalid email format"
+                        passwordError = if (passwordsValid) null else "Passwords do not match or are empty"
 
                         if (isUsernameValid && isEmailValid && passwordsValid) {
                             if (viewModel != null) {
