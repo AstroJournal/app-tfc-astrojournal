@@ -25,11 +25,11 @@ class LoginViewModel(
 
     fun login(email: String, password: String) {
         if (!android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
-            _uiState.value = LoginUiState.Error("Formato de email inválido")
+            _uiState.value = LoginUiState.Error("Invalid email format")
             return
         }
         if (password.isBlank()) {
-            _uiState.value = LoginUiState.Error("Introduce tu contraseña")
+            _uiState.value = LoginUiState.Error("Please enter your password")
             return
         }
 
@@ -41,7 +41,7 @@ class LoginViewModel(
             if (user != null) {
                 _uiState.value = LoginUiState.Success
             } else {
-                _uiState.value = LoginUiState.Error("Email o contraseña incorrectos")
+                _uiState.value = LoginUiState.Error("Incorrect email or password")
             }
         }
     }

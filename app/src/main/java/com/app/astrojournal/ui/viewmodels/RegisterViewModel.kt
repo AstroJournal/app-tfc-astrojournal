@@ -33,19 +33,19 @@ class RegisterViewModel(
     ) {
         // --- Client-side validation ---
         if (username.isBlank()) {
-            _uiState.value = RegisterUiState.Error("El nombre de usuario no puede estar vacío")
+            _uiState.value = RegisterUiState.Error("Username cannot be empty")
             return
         }
         if (!android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
-            _uiState.value = RegisterUiState.Error("Formato de email inválido")
+            _uiState.value = RegisterUiState.Error("Invalid email format")
             return
         }
         if (password.length < 6) {
-            _uiState.value = RegisterUiState.Error("La contraseña debe tener al menos 6 caracteres")
+            _uiState.value = RegisterUiState.Error("Password must be at least 6 characters long")
             return
         }
         if (password != repeatPassword) {
-            _uiState.value = RegisterUiState.Error("Las contraseñas no coinciden")
+            _uiState.value = RegisterUiState.Error("Passwords do not match")
             return
         }
 
@@ -59,9 +59,9 @@ class RegisterViewModel(
                 is UserInsertResult.Success ->
                     _uiState.value = RegisterUiState.Success
                 is UserInsertResult.DuplicateUsername ->
-                    _uiState.value = RegisterUiState.Error("Este nombre de usuario ya está en uso")
+                    _uiState.value = RegisterUiState.Error("This username is already taken")
                 is UserInsertResult.DuplicateEmail ->
-                    _uiState.value = RegisterUiState.Error("Este email ya está registrado")
+                    _uiState.value = RegisterUiState.Error("This email is already registered")
                 is UserInsertResult.Error ->
                     _uiState.value = RegisterUiState.Error(result.message)
             }
