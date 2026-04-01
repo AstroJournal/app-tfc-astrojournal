@@ -27,6 +27,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 
 /**
@@ -87,7 +88,8 @@ fun AstroBottomNavigation(
                     icon = Icons.Outlined.CalendarToday,
                     contentDescription = "Calendar",
                     isSelected = currentScreen == "calendar",
-                    onClick = { onNavigate("calendar") }
+                    onClick = { onNavigate("calendar") },
+                    modifier = Modifier.testTag("bottom_nav_calendar")
                 )
                 NavButton(
                     icon = Icons.Default.DarkMode,
@@ -105,7 +107,8 @@ fun AstroBottomNavigation(
                     icon = Icons.Outlined.FormatListBulleted,
                     contentDescription = "Agenda",
                     isSelected = currentScreen == "eventDetail",
-                    onClick = { onNavigate("eventDetail") }
+                    onClick = { onNavigate("eventDetail") },
+                    modifier = Modifier.testTag("bottom_nav_event_detail")
                 )
             }
         }

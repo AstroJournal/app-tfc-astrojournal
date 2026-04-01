@@ -67,13 +67,6 @@ kotlin {
             }
         }
 
-        // Tests en dispositivo Android (por si el equipo los usa)
-        maybeCreate("androidDeviceTest").dependencies {
-            implementation(libs.androidx.runner)
-            implementation(libs.androidx.core)
-            implementation(libs.androidx.junit)
-        }
-
         // Código específico de iOS
         maybeCreate("iosMain").dependencies {
             implementation("io.ktor:ktor-client-darwin:2.3.4")
@@ -94,4 +87,3 @@ sqldelight {
 tasks.matching { it.name.contains("verify", ignoreCase = true) }.configureEach {
     enabled = false
 }
-

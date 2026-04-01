@@ -17,6 +17,7 @@ import com.app.astrojournal.ui.components.StarIconShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.platform.testTag
 
 /**
  * Muestra una lista de objetos y eventos celestiales próximos.
@@ -49,16 +50,19 @@ fun CelestialObjectsList(
             Text(
                 text = "No upcoming events found.",
                 style = MaterialTheme.typography.bodyMedium.copy(color = TextGray400),
-                modifier = Modifier.padding(16.dp)
+                modifier = Modifier
+                    .padding(16.dp)
+                    .testTag("empty_events_message")
             )
         }
 
         // Iterar sobre los eventos astronómicos
-        events.forEach { event ->
+        events.forEachIndexed { index, event ->
             CelestialItem(
                 name = event.name,
                 description = event.description,
                 date = event.date,
+                itemTag = "event_item_$index",
                 onClick = { onEventClick(event) },
                 icon = {
                     // Seleccionar el icono adecuado según el tipo de evento
@@ -82,12 +86,14 @@ fun CelestialItem(
     name: String,
     description: String,
     date: String,
+    itemTag: String,
     icon: @Composable () -> Unit,
     onClick: () -> Unit = {}
 ) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
+            .testTag(itemTag)
             .clickable { onClick() }
             .padding(16.dp),
         horizontalArrangement = Arrangement.spacedBy(16.dp)
@@ -127,4 +133,3 @@ fun CelestialItem(
         )
     }
 }
-

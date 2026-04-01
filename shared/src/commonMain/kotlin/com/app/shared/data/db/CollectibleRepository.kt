@@ -5,9 +5,9 @@ import com.astrojournal.shared.data.db.CollectibleQueries
 
 class CollectibleRepository(
     private val queries: CollectibleQueries
-) {
+) : CollectibleStore {
 
-    fun insertCollectible(
+    override fun insertCollectible(
         eventId: Long,                 // ← CAMBIO: antes String
         eventName: String,
         observationDate: String,
@@ -25,7 +25,7 @@ class CollectibleRepository(
         )
     }
 
-    fun updateObserved(
+    override fun updateObserved(
         id: Long,
         observed: Int
     ) {
@@ -35,7 +35,7 @@ class CollectibleRepository(
         )
     }
 
-    fun updateNotes(
+    override fun updateNotes(
         id: Long,
         notes: String?
     ) {
@@ -45,7 +45,7 @@ class CollectibleRepository(
         )
     }
 
-    fun updateNotesByEventId(
+    override fun updateNotesByEventId(
         eventId: Long,
         notes: String?
     ) {
@@ -55,7 +55,7 @@ class CollectibleRepository(
         )
     }
 
-    fun updateAgended(
+    override fun updateAgended(
         id: Long,
         agended: Int
     ) {
@@ -65,15 +65,24 @@ class CollectibleRepository(
         )
     }
 
-    fun getAll(): List<Collectible> {
+    override fun getAll(): List<Collectible> {
         return queries.selectAll().executeAsList()
     }
 
-    fun getById(id: Long): Collectible? {   // ← CAMBIO: antes String
+    override fun getById(id: Long): Collectible? {   // ← CAMBIO: antes String
         return queries.selectById(id).executeAsOneOrNull()
     }
 
-    fun deleteById(id: Long) {              // ← CAMBIO: antes String
+    override fun getByEventId(eventId: Long): Collectible? {
+        return queries.selectByEventId(eventId).executeAsOneOrNull()
+    }
+
+    override fun deleteById(id: Long) {              // ← CAMBIO: antes String
         queries.deleteById(id)
+    }
+
+    override fun deleteByEventId(eventId: Long) {
+        val existing = queries.selectByEventId(eventId).executeAsOneOrNull() ?: return
+        queries.deleteById(existing.id)
     }
 }

@@ -25,6 +25,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import com.app.astrojournal.ui.components.AstroBottomNavigation
 import androidx.compose.ui.res.painterResource
@@ -118,7 +119,7 @@ fun HomeScreen(
                         ) {
                             androidx.compose.material3.CircularProgressIndicator(
                                 color = Indigo300,
-                                modifier = Modifier.size(48.dp)
+                                modifier = Modifier.size(48.dp).testTag("home_loading_indicator")
                             )
                             Text(
                                 text = "Loading moon data...",
@@ -147,7 +148,8 @@ fun HomeScreen(
                                 style = MaterialTheme.typography.headlineMedium.copy(
                                     color = TextGray100,
                                     fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
-                                )
+                                ),
+                                modifier = Modifier.testTag("home_error_title")
                             )
                             Text(
                                 text = state.message,
@@ -357,6 +359,5 @@ fun MoonHeader(moonData: com.app.astrojournal.data.model.Astro?) {
         }
     }
 }
-
 
 

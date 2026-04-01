@@ -31,6 +31,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
@@ -42,18 +43,19 @@ import com.app.astrojournal.ui.viewmodels.LoginViewModel
 
 @Composable
 fun LoginScreen(
-    viewModel: LoginViewModel,
+    viewModel: LoginViewModel? = null,
     onLoginSuccess: () -> Unit,
     onNavigateToRegister: () -> Unit
 ) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
+    var localError by remember { mutableStateOf<String?>(null) }
 
-    val uiState by viewModel.uiState.collectAsState()
+    val uiState = viewModel?.uiState?.collectAsState()?.value ?: LoginUiState.Idle
 
     // Navigate on success
     LaunchedEffect(uiState) {
-        if (uiState is LoginUiState.Success) {
+        if (viewModel != null && uiState is LoginUiState.Success) {
             onLoginSuccess()
             viewModel.resetState()
         }
@@ -99,9 +101,10 @@ fun LoginScreen(
                 )
 
                 // Error banner
-                if (uiState is LoginUiState.Error) {
+                val errorMessage = localError ?: (uiState as? LoginUiState.Error)?.message
+                if (errorMessage != null) {
                     Text(
-                        text = (uiState as LoginUiState.Error).message,
+                        text = errorMessage,
                         color = Color(0xFFFCA5A5),
                         style = MaterialTheme.typography.bodySmall,
                         modifier = Modifier
@@ -118,8 +121,11 @@ fun LoginScreen(
                 Spacer(modifier = Modifier.height(8.dp))
                 OutlinedTextField(
                     value = email,
-                    onValueChange = { email = it },
-                    modifier = Modifier.fillMaxWidth(),
+                    onValueChange = {
+                        email = it
+                        localError = null
+                    },
+                    modifier = Modifier.fillMaxWidth().testTag("login_email_input"),
                     placeholder = { Text("tu@email.com", color = Color(0xFF475569)) },
                     singleLine = true,
                     textStyle = MaterialTheme.typography.bodyLarge.copy(color = Color.White),
@@ -147,8 +153,11 @@ fun LoginScreen(
                 Spacer(modifier = Modifier.height(8.dp))
                 OutlinedTextField(
                     value = password,
-                    onValueChange = { password = it },
-                    modifier = Modifier.fillMaxWidth(),
+                    onValueChange = {
+                        password = it
+                        localError = null
+                    },
+                    modifier = Modifier.fillMaxWidth().testTag("login_password_input"),
                     placeholder = { Text("••••••••", color = Color(0xFF475569)) },
                     singleLine = true,
                     visualTransformation = PasswordVisualTransformation(),
@@ -170,11 +179,27 @@ fun LoginScreen(
                 Spacer(modifier = Modifier.height(28.dp))
 
                 Button(
-                    onClick = { viewModel.login(email, password) },
+                    onClick = {
+                        val validEmail = android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()
+                        val validPassword = password.isNotBlank()
+                        localError = when {
+                            !validEmail -> "Formato de email inválido"
+                            !validPassword -> "La contraseña es obligatoria"
+                            else -> null
+                        }
+                        if (localError == null) {
+                            if (viewModel != null) {
+                                viewModel.login(email, password)
+                            } else {
+                                onLoginSuccess()
+                            }
+                        }
+                    },
                     enabled = uiState !is LoginUiState.Loading,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(50.dp),
+                        .height(50.dp)
+                        .testTag("login_submit_button"),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = Color(0xFF6366F1),
                         contentColor = Color.White
@@ -200,7 +225,7 @@ fun LoginScreen(
 
                 TextButton(
                     onClick = onNavigateToRegister,
-                    modifier = Modifier.align(Alignment.CenterHorizontally)
+                    modifier = Modifier.align(Alignment.CenterHorizontally).testTag("login_register_nav_button")
                 ) {
                     Text(
                         text = "Don't have an account? Sign up here",
