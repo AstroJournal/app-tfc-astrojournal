@@ -185,12 +185,11 @@ fun EventDetailScreen(
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(innerPadding)
                     .padding(horizontal = 20.dp)
                     .testTag("event_detail_screen")
                     .verticalScroll(scrollState)
             ) {
-                Spacer(modifier = Modifier.height(24.dp))
+                Spacer(modifier = Modifier.height(innerPadding.calculateTopPadding() + 24.dp))
 
                 EventDetailVisibilitySection(
                     state = visibilityState,
@@ -314,7 +313,7 @@ fun EventDetailScreen(
                     )
                 }
 
-                Spacer(modifier = Modifier.height(24.dp))
+                Spacer(modifier = Modifier.height(innerPadding.calculateBottomPadding() + 24.dp))
             }
         }
     }

@@ -90,10 +90,9 @@ fun SocialEventsScreen(
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(innerPadding)
                     .padding(horizontal = 16.dp)
             ) {
-                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(innerPadding.calculateTopPadding() + 16.dp))
                 
                 // Header
                 Text(
@@ -177,8 +176,11 @@ fun SocialEventsScreen(
                     }
                 } else {
                     LazyColumn(
+                        modifier = Modifier.fillMaxSize(),
                         verticalArrangement = Arrangement.spacedBy(12.dp),
-                        contentPadding = PaddingValues(bottom = 80.dp)
+                        contentPadding = PaddingValues(
+                            bottom = 80.dp + innerPadding.calculateBottomPadding()
+                        )
                     ) {
                         items(filteredEvents) { event ->
                             MeetupEventCard(
