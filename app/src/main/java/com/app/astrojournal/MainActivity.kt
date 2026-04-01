@@ -25,6 +25,7 @@ import com.app.astrojournal.ui.screens.LoginScreen
 import com.app.astrojournal.ui.screens.RegisterScreen
 import com.app.astrojournal.ui.screens.ObservedEventsScreen
 import com.app.astrojournal.ui.screens.SocialEventsScreen
+import com.app.astrojournal.ui.screens.ProfileScreen
 import com.app.astrojournal.ui.viewmodels.CalendarViewModel
 import com.app.astrojournal.ui.viewmodels.EventDetailViewModel
 import com.app.astrojournal.ui.viewmodels.EventOfTheDayViewModel
@@ -181,7 +182,8 @@ class MainActivity : ComponentActivity() {
                             currentScreen = "home"
                         }
                     }
-                    currentScreen == "profile" -> com.app.astrojournal.ui.screens.ProfileScreen(
+                    currentScreen == "profile" -> ProfileScreen(
+                        viewModel = observedEventsViewModel,
                         currentScreen = currentScreen,
                         onNavigate = { navigateTo(it) }
                     )

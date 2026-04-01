@@ -18,39 +18,35 @@
 > Task :app:createDebugCompatibleScreenManifests UP-TO-DATE
 > Task :app:extractDeepLinksDebug UP-TO-DATE
 > Task :shared:processAndroidMainManifest UP-TO-DATE
-> Task :app:processDebugMainManifest
-> Task :app:processDebugManifest
+> Task :app:processDebugMainManifest UP-TO-DATE
+> Task :app:processDebugManifest UP-TO-DATE
+> Task :app:processDebugManifestForPackage UP-TO-DATE
+> Task :app:processDebugResources UP-TO-DATE
 > Task :shared:checkKotlinGradlePluginConfigurationErrors SKIPPED
 > Task :shared:generateCommonMainAstrojournalDatabaseInterface UP-TO-DATE
+> Task :shared:compileAndroidMain UP-TO-DATE
+> Task :shared:bundleAndroidMainClassesToCompileJar UP-TO-DATE
 > Task :app:javaPreCompileDebug UP-TO-DATE
 > Task :app:mergeDebugShaders UP-TO-DATE
 > Task :app:compileDebugShaders NO-SOURCE
 > Task :app:generateDebugAssets UP-TO-DATE
 > Task :app:mergeDebugAssets UP-TO-DATE
 > Task :app:compressDebugAssets UP-TO-DATE
+> Task :shared:processAndroidMainJavaRes UP-TO-DATE
 > Task :app:checkDebugDuplicateClasses UP-TO-DATE
 > Task :app:desugarDebugFileDependencies UP-TO-DATE
 > Task :app:mergeExtDexDebug UP-TO-DATE
+> Task :shared:bundleLibRuntimeToDirAndroidMain UP-TO-DATE
 > Task :app:mergeDebugJniLibFolders UP-TO-DATE
+> Task :app:mergeLibDexDebug UP-TO-DATE
 > Task :shared:mergeAndroidMainJniLibFolders UP-TO-DATE
 > Task :shared:mergeAndroidMainNativeLibs NO-SOURCE
 > Task :shared:copyAndroidMainJniLibsProjectOnly UP-TO-DATE
-> Task :app:processDebugManifestForPackage
 > Task :app:mergeDebugNativeLibs UP-TO-DATE
 > Task :app:stripDebugDebugSymbols UP-TO-DATE
 > Task :app:validateSigningDebug UP-TO-DATE
 > Task :app:writeDebugAppMetadata UP-TO-DATE
 > Task :app:writeDebugSigningConfigVersions UP-TO-DATE
-> Task :app:processDebugResources
-
-> Task :shared:compileAndroidMain
-w: file:///D:/Users/Documentos/UNIR/SEGUNDO/Proyecto_intermodular/Repositorio_Astrojournal/app-tfc-astrojournal/shared/src/androidMain/kotlin/com/app/shared/data/db/DatabaseDriverFactory.kt:8:1 'expect'/'actual' classes (including interfaces, objects, annotations, enums, and 'actual' typealiases) are in Beta. You can use -Xexpect-actual-classes flag to suppress this warning. Also see: https://youtrack.jetbrains.com/issue/KT-61573
-w: file:///D:/Users/Documentos/UNIR/SEGUNDO/Proyecto_intermodular/Repositorio_Astrojournal/app-tfc-astrojournal/shared/src/commonMain/kotlin/com/app/shared/data/db/DatabaseDriverFactory.kt:5:1 'expect'/'actual' classes (including interfaces, objects, annotations, enums, and 'actual' typealiases) are in Beta. You can use -Xexpect-actual-classes flag to suppress this warning. Also see: https://youtrack.jetbrains.com/issue/KT-61573
-
-> Task :shared:processAndroidMainJavaRes UP-TO-DATE
-> Task :shared:bundleAndroidMainClassesToCompileJar
-> Task :shared:bundleLibRuntimeToDirAndroidMain
-> Task :app:mergeLibDexDebug
 
 > Task :app:compileDebugKotlin
 w: file:///D:/Users/Documentos/UNIR/SEGUNDO/Proyecto_intermodular/Repositorio_Astrojournal/app-tfc-astrojournal/app/src/main/java/com/app/astrojournal/ui/components/BottomNavigationComponent.kt:107:43 'val Icons.Outlined.FormatListBulleted: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Outlined.FormatListBulleted.
@@ -68,5 +64,5 @@ w: file:///D:/Users/Documentos/UNIR/SEGUNDO/Proyecto_intermodular/Repositorio_As
 > Task :app:createDebugApkListingFileRedirect
 > Task :app:assembleDebug
 
-BUILD SUCCESSFUL in 15s
-46 actionable tasks: 13 executed, 33 up-to-date
+BUILD SUCCESSFUL in 12s
+46 actionable tasks: 5 executed, 41 up-to-date
