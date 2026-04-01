@@ -82,6 +82,7 @@ class CollectibleRepository(
     }
 
     override fun deleteByEventId(eventId: Long) {
-        queries.deleteByEventId(eventId)
+        val existing = queries.selectByEventId(eventId).executeAsOneOrNull() ?: return
+        queries.deleteById(existing.id)
     }
 }

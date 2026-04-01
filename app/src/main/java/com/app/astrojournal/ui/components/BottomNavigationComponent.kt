@@ -15,8 +15,9 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DarkMode
 import androidx.compose.material.icons.outlined.CalendarToday
-import androidx.compose.material.icons.outlined.FavoriteBorder
-import androidx.compose.material.icons.outlined.PersonOutline
+import androidx.compose.material.icons.outlined.Visibility
+import androidx.compose.material.icons.outlined.PeopleOutline
+import androidx.compose.material.icons.outlined.FormatListBulleted
 import androidx.compose.material.icons.outlined.StarOutline
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
@@ -29,6 +30,11 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 
+/**
+ * Custom Bottom Navigation Bar with navigation support.
+ * @param currentScreen The currently selected screen identifier.
+ * @param onNavigate Callback invoked when a navigation button is tapped.
+ */
 @Composable
 fun AstroBottomNavigation(
     currentScreen: String = "home",
@@ -40,6 +46,7 @@ fun AstroBottomNavigation(
             .fillMaxWidth()
             .height(100.dp)
     ) {
+        // Gradient overlay for bottom fade
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -54,6 +61,7 @@ fun AstroBottomNavigation(
                 )
         )
 
+        // Glass panel container
         Box(
             modifier = Modifier
                 .align(Alignment.Center)
@@ -66,18 +74,15 @@ fun AstroBottomNavigation(
             contentAlignment = Alignment.Center
         ) {
             Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 24.dp),
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 NavButton(
-                    icon = Icons.Outlined.StarOutline,
-                    contentDescription = "Stars",
-                    isSelected = currentScreen == "eventOfTheDay",
-                    onClick = { onNavigate("eventOfTheDay") },
-                    modifier = Modifier.testTag("bottom_nav_stars")
+                    icon = Icons.Outlined.PeopleOutline,
+                    contentDescription = "Social",
+                    isSelected = currentScreen == "social",
+                    onClick = { onNavigate("social") }
                 )
                 NavButton(
                     icon = Icons.Outlined.CalendarToday,
@@ -90,21 +95,20 @@ fun AstroBottomNavigation(
                     icon = Icons.Default.DarkMode,
                     contentDescription = "Home",
                     isSelected = currentScreen == "home",
-                    onClick = { onNavigate("home") },
-                    modifier = Modifier.testTag("bottom_nav_home")
+                    onClick = { onNavigate("home") }
                 )
                 NavButton(
-                    icon = Icons.Outlined.FavoriteBorder,
-                    contentDescription = "Favorites",
+                    icon = Icons.Outlined.Visibility,
+                    contentDescription = "Observed",
+                    isSelected = currentScreen == "observed",
+                    onClick = { onNavigate("observed") }
+                )
+                NavButton(
+                    icon = Icons.Outlined.FormatListBulleted,
+                    contentDescription = "Agenda",
                     isSelected = currentScreen == "eventDetail",
                     onClick = { onNavigate("eventDetail") },
                     modifier = Modifier.testTag("bottom_nav_event_detail")
-                )
-                NavButton(
-                    icon = Icons.Outlined.PersonOutline,
-                    contentDescription = "Profile",
-                    isSelected = currentScreen == "login",
-                    onClick = { onNavigate("login") }
                 )
             }
         }
@@ -119,7 +123,7 @@ fun NavButton(
     onClick: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
-    val tintColor = if (isSelected) Color(0xFF6366F1) else Color(0xFF9CA3AF)
+    val tintColor = if (isSelected) Color(0xFF6366F1) else Color(0xFF9CA3AF) // Indigo 500 vs Gray 400
 
     Box(
         modifier = modifier

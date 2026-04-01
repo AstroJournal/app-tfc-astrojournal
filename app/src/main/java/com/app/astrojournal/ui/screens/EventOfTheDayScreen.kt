@@ -38,6 +38,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
@@ -75,10 +76,10 @@ fun EventOfTheDayContent(
     currentScreen: String = "eventOfTheDay",
     onNavigate: (String) -> Unit = {}
 ) {
-    var visibilityExpanded by remember { mutableStateOf(false) }
     val scrollState = rememberScrollState()
 
     Scaffold(
+        topBar = { com.app.astrojournal.ui.components.AstroTopBar(onProfileClick = { onNavigate("profile") }) },
         bottomBar = {
             AstroBottomNavigation(currentScreen = currentScreen, onNavigate = onNavigate)
         },
@@ -105,9 +106,7 @@ fun EventOfTheDayContent(
             ) {
                 Spacer(modifier = Modifier.height(24.dp))
                 EventOfDayVisibilitySection(
-                    state = visibilityState,
-                    expanded = visibilityExpanded,
-                    onToggleExpanded = { visibilityExpanded = !visibilityExpanded }
+                    state = visibilityState
                 )
 
                 Spacer(modifier = Modifier.height(12.dp))
@@ -139,7 +138,7 @@ private fun EventOfDayApodSection(
             .padding(16.dp)
     ) {
         Text(
-            text = "Evento del día",
+            text = "Today's Historical Event",
             style = MaterialTheme.typography.titleMedium,
             color = Color(0xFFA5B4FC),
             fontWeight = FontWeight.Bold,
@@ -151,13 +150,13 @@ private fun EventOfDayApodSection(
             is RemoteUiState.Loading -> {
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp, color = Color(0xFF818CF8))
-                    Text("Cargando imagen del día...", color = Color(0xFFCBD5E1), style = MaterialTheme.typography.bodySmall)
+                    Text("Loading today's image...", color = Color(0xFFCBD5E1), style = MaterialTheme.typography.bodySmall)
                 }
             }
 
             is RemoteUiState.Error -> {
-                Text("No se pudo cargar el evento del día.", color = Color(0xFFCBD5E1))
-                TextButton(onClick = onRetry) { Text("Reintentar") }
+                Text("Failed to load today's event.", color = Color(0xFFCBD5E1))
+                TextButton(onClick = onRetry) { Text("Retry") }
             }
 
             is RemoteUiState.Success -> {
@@ -199,7 +198,7 @@ private fun EventOfDayApodSection(
                             .background(Color(0xFF0F172A)),
                         contentAlignment = Alignment.Center
                     ) {
-                        Text("Imagen no disponible", color = Color(0xFF94A3B8), style = MaterialTheme.typography.bodySmall)
+                        Text("Image not available", color = Color(0xFF94A3B8), style = MaterialTheme.typography.bodySmall)
                     }
                 }
                 Spacer(modifier = Modifier.height(8.dp))
@@ -223,7 +222,7 @@ private fun EventOfDayApodSection(
                         onClick = { openLinkSafely() },
                         colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF6366F1), contentColor = Color.White)
                     ) {
-                        Text("Abrir en navegador")
+                        Text("Open in browser")
                     }
                 }
             }
@@ -233,10 +232,9 @@ private fun EventOfDayApodSection(
 
 @Composable
 private fun EventOfDayVisibilitySection(
-    state: RemoteUiState<VisibilityUi>,
-    expanded: Boolean,
-    onToggleExpanded: () -> Unit
+    state: RemoteUiState<VisibilityUi>
 ) {
+    var expanded by remember { mutableStateOf(false) }
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -244,7 +242,7 @@ private fun EventOfDayVisibilitySection(
             .clip(RoundedCornerShape(18.dp))
             .background(GlassPanelBg)
             .border(1.dp, White10, RoundedCornerShape(18.dp))
-            .clickable { onToggleExpanded() }
+            .clickable { expanded = !expanded }
             .padding(14.dp)
     ) {
         Row(
@@ -252,7 +250,7 @@ private fun EventOfDayVisibilitySection(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text("Visibilidad", color = Color(0xFFA5B4FC), style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Medium)
+            Text("Visibility", color = Color(0xFFA5B4FC), style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Medium)
             androidx.compose.material3.Icon(
                 imageVector = if (expanded) Icons.Filled.ExpandLess else Icons.Filled.ExpandMore,
                 contentDescription = null,
@@ -262,23 +260,29 @@ private fun EventOfDayVisibilitySection(
 
         if (expanded) {
             Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = "Visibility details",
+                color = Color(0xFFCBD5E1),
+                style = MaterialTheme.typography.bodySmall,
+                modifier = Modifier.testTag("event_of_day_visibility_details")
+            )
+            Spacer(modifier = Modifier.height(6.dp))
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(12.dp))
                     .background(SurfaceDark)
                     .padding(12.dp)
-                    .testTag("event_of_day_visibility_details")
             ) {
                 when (state) {
                     is RemoteUiState.Loading -> Text(
-                        "Calculando...",
+                        "Calculating...",
                         color = Color(0xFFCBD5E1),
                         style = MaterialTheme.typography.bodyMedium
                     )
 
                     is RemoteUiState.Error -> Text(
-                        "Información no disponible",
+                        "Information not available",
                         color = Color(0xFF94A3B8),
                         style = MaterialTheme.typography.bodyMedium
                     )
@@ -287,14 +291,14 @@ private fun EventOfDayVisibilitySection(
                         val data = state.data
                         Column {
                             Text(
-                                if (data.isObservable) "Observable" else "Visibilidad limitada",
+                                if (data.isObservable) "Observable" else "Limited visibility",
                                 color = Color(0xFF818CF8),
                                 fontWeight = FontWeight.Bold,
                                 style = MaterialTheme.typography.bodyMedium
                             )
                             Spacer(modifier = Modifier.height(4.dp))
                             Text(
-                                "Franja: ${data.window}",
+                                "Window: ${data.window}",
                                 color = Color(0xFFCBD5E1),
                                 style = MaterialTheme.typography.bodyMedium
                             )

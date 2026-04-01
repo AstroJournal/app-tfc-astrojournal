@@ -1,6 +1,7 @@
 package com.app.astrojournal.ui.screens
 
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -8,29 +9,37 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.app.astrojournal.R
 import com.app.astrojournal.data.model.AstroEvent
+import com.app.astrojournal.data.model.VisibilityUi
+import com.app.astrojournal.data.repository.SpaceRepository
 import com.app.astrojournal.ui.components.AstroBottomNavigation
 import com.app.astrojournal.ui.viewmodels.AgendaFilter
 import com.app.astrojournal.ui.viewmodels.EventDetailViewModel
+import com.app.astrojournal.ui.viewmodels.RemoteUiState
 import com.astrojournal.shared.data.db.Collectible
 import kotlinx.coroutines.delay
+import java.time.LocalDate
 
 @Composable
 fun EventDetailScreen(
@@ -40,69 +49,103 @@ fun EventDetailScreen(
     onNavigate: (String) -> Unit = {},
     onEventSelected: (AstroEvent) -> Unit = {}
 ) {
-    val focusManager = LocalFocusManager.current
     val scrollState = rememberScrollState()
-
+    val focusManager = LocalFocusManager.current
+    val now = System.currentTimeMillis()
     val eventId = event.timestamp
-    val isFuture = event.timestamp > System.currentTimeMillis()
-    val isAlreadyInAgenda = isFuture && viewModel.isEventAgended
+    val isFuture = event.timestamp > now
 
     var noteInput by remember { mutableStateOf("") }
-    var showDeleteNoteDialog by remember { mutableStateOf(false) }
-    var showAgendaAddedMessage by remember { mutableStateOf(false) }
-    var previousAgendedState by remember { mutableStateOf<Boolean?>(null) }
-    var forceShowEditor by remember { mutableStateOf(false) }
-    var eventToDelete by remember { mutableStateOf<Collectible?>(null) }
+    var visibilityExpanded by remember { mutableStateOf(false) }
+    var showAddedMessage by remember { mutableStateOf(false) }
+    var addedByCurrentAction by remember { mutableStateOf(false) }
+    var eventToRemoveFromAgenda by remember { mutableStateOf<Collectible?>(null) }
 
-    LaunchedEffect(eventId) {
-        showAgendaAddedMessage = false
-        previousAgendedState = null
-        forceShowEditor = false
-        viewModel.loadEvent(eventId)
+    val visibilityState = produceState<RemoteUiState<VisibilityUi>>(
+        initialValue = RemoteUiState.Loading,
+        key1 = Unit
+    ) {
+        val repository = SpaceRepository()
+        value = runCatching { repository.getVisibilityWithFallback(LocalDate.now()) }
+            .fold(
+                onSuccess = { RemoteUiState.Success(it) },
+                onFailure = { RemoteUiState.Error("Information not available") }
+            )
+    }.value
+
+    val allAgended = viewModel.collectibles.filter { it.agended == 1L }
+    val filteredAgendaByTabs = when (viewModel.agendaFilter) {
+        AgendaFilter.ALL -> allAgended
+        AgendaFilter.PENDING -> allAgended.filter { it.observed != 1L }
+        AgendaFilter.OBSERVED -> allAgended.filter { it.observed == 1L }
     }
 
-    LaunchedEffect(viewModel.currentEventNote) {
+    LaunchedEffect(viewModel.collectibles) {
+        viewModel.updateEventStatus(eventId)
         noteInput = viewModel.currentEventNote
     }
 
-    LaunchedEffect(viewModel.isEventAgended, eventId, isFuture) {
-        val prev = previousAgendedState
-        if (prev == false && viewModel.isEventAgended && isFuture) {
-            showAgendaAddedMessage = true
-            delay(2600)
-            showAgendaAddedMessage = false
+    LaunchedEffect(viewModel.isEventAgended, isFuture, addedByCurrentAction) {
+        if (isFuture && viewModel.isEventAgended && addedByCurrentAction) {
+            showAddedMessage = true
+            addedByCurrentAction = false
         }
-        previousAgendedState = viewModel.isEventAgended
     }
 
-    val agendedEvents = viewModel.collectibles.filter { it.agended == 1L }.sortedBy { it.eventId }
-    val filteredEvents = when (viewModel.agendaFilter) {
-        AgendaFilter.ALL -> agendedEvents
-        AgendaFilter.PENDING -> agendedEvents.filter { it.observed == 0L }
-        AgendaFilter.OBSERVED -> agendedEvents.filter { it.observed == 1L }
+    LaunchedEffect(showAddedMessage) {
+        if (showAddedMessage) {
+            delay(2500)
+            showAddedMessage = false
+        }
     }
 
-    fun saveCurrentEvent(note: String = noteInput, agended: Boolean = viewModel.isEventAgended, observed: Boolean = viewModel.isEventObserved) {
-        viewModel.saveFullEventState(
-            eventId = eventId,
-            eventName = event.name,
-            date = event.date,
-            note = note,
-            agended = agended,
-            observed = observed
+    if (eventToRemoveFromAgenda != null) {
+        AlertDialog(
+            onDismissRequest = { eventToRemoveFromAgenda = null },
+            title = { Text("Remove from agenda", color = Color.White) },
+            text = { Text("Are you sure you want to remove this event from your agenda?", color = Color.White) },
+            confirmButton = {
+                TextButton(onClick = {
+                    val item = eventToRemoveFromAgenda!!
+                    viewModel.saveFullEventState(
+                        eventId = item.eventId,
+                        eventName = item.eventName,
+                        date = item.observationDate,
+                        note = item.notes ?: "",
+                        agended = false,
+                        observed = item.observed == 1L
+                    )
+                    eventToRemoveFromAgenda = null
+                }) {
+                    Text("Remove", color = Color(0xFFFCA5A5))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { eventToRemoveFromAgenda = null }) {
+                    Text("Cancel", color = Color(0xFF94A3B8))
+                }
+            },
+            containerColor = Color(0xFF1E293B)
         )
     }
 
     Scaffold(
+        topBar = { com.app.astrojournal.ui.components.AstroTopBar(onProfileClick = { onNavigate("profile") }) },
         bottomBar = { AstroBottomNavigation(currentScreen = currentScreen, onNavigate = onNavigate) },
         containerColor = Color.Transparent,
         contentColor = Color.White
     ) { innerPadding ->
-        androidx.compose.foundation.layout.Box(modifier = Modifier.fillMaxSize()) {
+        Box(modifier = Modifier.fillMaxSize()) {
             Image(
                 painter = painterResource(id = R.drawable.stary_night_bg),
                 contentDescription = null,
                 modifier = Modifier.fillMaxSize(),
+                contentScale = ContentScale.Crop
+            )
+            Image(
+                painter = painterResource(id = getEventBackgroundImage(event.name)),
+                contentDescription = null,
+                modifier = Modifier.fillMaxSize().alpha(0.24f),
                 contentScale = ContentScale.Crop
             )
 
@@ -111,15 +154,24 @@ fun EventDetailScreen(
                     .fillMaxSize()
                     .padding(innerPadding)
                     .padding(horizontal = 20.dp)
+                    .testTag("event_detail_screen")
                     .verticalScroll(scrollState)
             ) {
                 Spacer(modifier = Modifier.height(24.dp))
 
-                if (!isAlreadyInAgenda || forceShowEditor) {
+                EventDetailVisibilitySection(
+                    state = visibilityState,
+                    expanded = visibilityExpanded,
+                    onToggleExpanded = { visibilityExpanded = !visibilityExpanded }
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                if (!(isFuture && viewModel.isEventAgended && !showAddedMessage)) {
                     EventEditorCard(
                         event = event,
-                        localDateTime = formatLocalDateTime(eventId),
-                        countdownText = getCountdownText(eventId),
+                        localDateTime = event.date,
+                        countdownText = getCountdownText(event.timestamp),
                         noteInput = noteInput,
                         currentNote = viewModel.currentEventNote,
                         isFuture = isFuture,
@@ -127,76 +179,86 @@ fun EventDetailScreen(
                         isAgended = viewModel.isEventAgended,
                         onNoteChange = { noteInput = it },
                         onSaveNote = {
-                            saveCurrentEvent()
-                            forceShowEditor = false
+                            viewModel.saveFullEventState(
+                                eventId = eventId,
+                                eventName = event.name,
+                                date = event.date,
+                                note = noteInput,
+                                agended = viewModel.isEventAgended,
+                                observed = viewModel.isEventObserved
+                            )
                             focusManager.clearFocus()
                         },
-                        onPrimaryAction = {
-                            val newAgended = if (isFuture) true else viewModel.isEventAgended
-                            val newObserved = if (!isFuture) !viewModel.isEventObserved else viewModel.isEventObserved
-                            saveCurrentEvent(agended = newAgended, observed = newObserved)
-                            if (isFuture && viewModel.isEventAgended) forceShowEditor = false
+                        onToggleObserved = { checked ->
+                            viewModel.saveFullEventState(
+                                eventId = eventId,
+                                eventName = event.name,
+                                date = event.date,
+                                note = noteInput,
+                                agended = viewModel.isEventAgended,
+                                observed = checked
+                            )
                         },
-                        onDeleteNote = { showDeleteNoteDialog = true }
+                        onPrimaryAction = {
+                            val wasAgended = viewModel.isEventAgended
+                            val newAgended = if (isFuture) !viewModel.isEventAgended else viewModel.isEventAgended
+                            val newObserved = if (!isFuture) !viewModel.isEventObserved else viewModel.isEventObserved
+                            if (isFuture && !wasAgended && newAgended) {
+                                addedByCurrentAction = true
+                            }
+                            viewModel.saveFullEventState(
+                                eventId = eventId,
+                                eventName = event.name,
+                                date = event.date,
+                                note = noteInput,
+                                agended = newAgended,
+                                observed = newObserved
+                            )
+                        },
+                        onDeleteNote = {
+                            viewModel.saveFullEventState(
+                                eventId = eventId,
+                                eventName = event.name,
+                                date = event.date,
+                                note = "",
+                                agended = viewModel.isEventAgended,
+                                observed = viewModel.isEventObserved
+                            )
+                            noteInput = ""
+                        }
                     )
-                }
 
-                if (showAgendaAddedMessage) {
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text(
-                        text = "Evento anadido correctamente",
-                        color = Indigo300,
-                        style = MaterialTheme.typography.labelMedium,
-                        fontWeight = FontWeight.SemiBold
-                    )
+                    Spacer(modifier = Modifier.height(12.dp))
+                    EventMeetupButton(eventName = event.name, onNavigate = onNavigate)
+                } else if (showAddedMessage) {
+                    EventAddedMessageCard(eventName = event.name)
                 }
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                if (agendedEvents.isNotEmpty()) {
+                if (allAgended.isNotEmpty()) {
+                    Spacer(modifier = Modifier.height(16.dp))
                     AgendaSection(
                         selectedFilter = viewModel.agendaFilter,
-                        filteredEvents = filteredEvents,
+                        filteredEvents = filteredAgendaByTabs.sortedBy { it.eventId },
                         currentEventId = eventId,
                         onFilterSelected = { viewModel.updateAgendaFilter(it) },
-                        onSelectEvent = { item ->
-                            onEventSelected(
-                                AstroEvent(
-                                    name = item.eventName,
-                                    date = item.observationDate,
-                                    description = "",
-                                    timestamp = item.eventId,
-                                    type = inferEventType(item.eventName)
-                                )
-                            )
-                        },
+                        onSelectEvent = { onEventSelected(it.toAstroEvent()) },
                         onToggleObserved = { item, checked ->
                             viewModel.saveFullEventState(
                                 eventId = item.eventId,
                                 eventName = item.eventName,
                                 date = item.observationDate,
                                 note = item.notes ?: "",
-                                agended = true,
+                                agended = item.agended == 1L,
                                 observed = checked
                             )
                         },
                         onEdit = { item ->
-                            if (item.eventId == eventId) {
-                                noteInput = item.notes ?: ""
-                                forceShowEditor = true
-                            } else {
-                                onEventSelected(
-                                    AstroEvent(
-                                        name = item.eventName,
-                                        date = item.observationDate,
-                                        description = "",
-                                        timestamp = item.eventId,
-                                        type = inferEventType(item.eventName)
-                                    )
-                                )
-                            }
+                            noteInput = item.notes ?: ""
+                            onEventSelected(item.toAstroEvent())
                         },
-                        onDelete = { eventToDelete = it }
+                        onDelete = { eventToRemoveFromAgenda = it }
                     )
                 }
 
@@ -204,32 +266,14 @@ fun EventDetailScreen(
             }
         }
     }
+}
 
-    if (showDeleteNoteDialog) {
-        DeleteNoteDialog(
-            onConfirm = {
-                showDeleteNoteDialog = false
-                saveCurrentEvent(note = "")
-            },
-            onDismiss = { showDeleteNoteDialog = false }
-        )
-    }
-
-    eventToDelete?.let { target ->
-        DeleteAgendaItemDialog(
-            item = target,
-            onConfirm = {
-                viewModel.saveFullEventState(
-                    eventId = target.eventId,
-                    eventName = target.eventName,
-                    date = target.observationDate,
-                    note = "",
-                    agended = false,
-                    observed = false
-                )
-                eventToDelete = null
-            },
-            onDismiss = { eventToDelete = null }
-        )
-    }
+private fun Collectible.toAstroEvent(): AstroEvent {
+    return AstroEvent(
+        name = eventName,
+        date = observationDate,
+        description = "",
+        timestamp = eventId,
+        type = com.app.astrojournal.data.model.EventType.OTHER
+    )
 }

@@ -1,6 +1,5 @@
 package com.app.astrojournal.ui.screens
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
@@ -10,19 +9,21 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -31,18 +32,19 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.platform.testTag
-import com.app.astrojournal.R
+import com.app.astrojournal.ui.viewmodels.RegisterUiState
+import com.app.astrojournal.ui.viewmodels.RegisterViewModel
 
 @Composable
 fun RegisterScreen(
+    viewModel: RegisterViewModel? = null,
     onRegisterSuccess: () -> Unit,
     onNavigateToLogin: () -> Unit
 ) {
@@ -50,13 +52,22 @@ fun RegisterScreen(
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var repeatPassword by remember { mutableStateOf("") }
-    
-    var emailError by remember { mutableStateOf(false) }
-    var passwordError by remember { mutableStateOf(false) }
+    var usernameError by remember { mutableStateOf<String?>(null) }
+    var emailError by remember { mutableStateOf<String?>(null) }
+    var passwordError by remember { mutableStateOf<String?>(null) }
+
+    val uiState = viewModel?.uiState?.collectAsState()?.value ?: RegisterUiState.Idle
+
+    // Navigate on success
+    LaunchedEffect(uiState) {
+        if (viewModel != null && uiState is RegisterUiState.Success) {
+            onRegisterSuccess()
+            viewModel.resetState()
+        }
+    }
 
     val scrollState = rememberScrollState()
 
-    // Solid dark background matching the general aesthetic
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -71,9 +82,9 @@ fun RegisterScreen(
                 .verticalScroll(scrollState)
         ) {
             Spacer(modifier = Modifier.height(16.dp))
-            
+
             Text(
-                text = "Crea tu cuenta en",
+                text = "Create your account on",
                 style = MaterialTheme.typography.titleMedium,
                 color = Color(0xFF94A3B8)
             )
@@ -85,10 +96,9 @@ fun RegisterScreen(
                 ),
                 color = Color.White
             )
-            
+
             Spacer(modifier = Modifier.height(32.dp))
 
-            // Glassmorphism login panel
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -98,26 +108,72 @@ fun RegisterScreen(
                     .padding(24.dp)
             ) {
                 Text(
-                    text = "Registro",
+                    text = "Register",
                     style = MaterialTheme.typography.titleLarge,
                     color = Color.White,
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier.padding(bottom = 20.dp)
                 )
 
+                // Error banner from ViewModel
+                val remoteError = (uiState as? RegisterUiState.Error)?.message
+                if (remoteError != null || usernameError != null || emailError != null || passwordError != null) {
+                    remoteError?.let {
+                        Text(
+                            text = it,
+                            color = Color(0xFFFCA5A5),
+                            style = MaterialTheme.typography.bodySmall,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(bottom = 8.dp)
+                        )
+                    }
+                    usernameError?.let {
+                        Text(
+                            text = it,
+                            color = Color(0xFFFCA5A5),
+                            style = MaterialTheme.typography.bodySmall,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(bottom = 6.dp)
+                        )
+                    }
+                    emailError?.let {
+                        Text(
+                            text = it,
+                            color = Color(0xFFFCA5A5),
+                            style = MaterialTheme.typography.bodySmall,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(bottom = 6.dp)
+                        )
+                    }
+                    passwordError?.let {
+                        Text(
+                            text = it,
+                            color = Color(0xFFFCA5A5),
+                            style = MaterialTheme.typography.bodySmall,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(bottom = 12.dp)
+                        )
+                    }
+                }
+
                 // Username field
                 Text(
-                    text = "Nombre de usuario",
+                    text = "Username",
                     style = MaterialTheme.typography.labelMedium,
                     color = Color(0xFF94A3B8)
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 OutlinedTextField(
                     value = username,
-                    onValueChange = { username = it },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .testTag("register_username_input"),
+                    onValueChange = {
+                        username = it
+                        usernameError = null
+                    },
+                    modifier = Modifier.fillMaxWidth().testTag("register_username_input"),
                     placeholder = { Text("astro_fan", color = Color(0xFF475569)) },
                     singleLine = true,
                     textStyle = MaterialTheme.typography.bodyLarge.copy(color = Color.White),
@@ -134,10 +190,10 @@ fun RegisterScreen(
                     ),
                     shape = RoundedCornerShape(12.dp)
                 )
-                
+
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // Email
+                // Email field
                 Text(
                     text = "Email",
                     style = MaterialTheme.typography.labelMedium,
@@ -146,10 +202,11 @@ fun RegisterScreen(
                 Spacer(modifier = Modifier.height(8.dp))
                 OutlinedTextField(
                     value = email,
-                    onValueChange = { email = it },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .testTag("register_email_input"),
+                    onValueChange = {
+                        email = it
+                        emailError = null
+                    },
+                    modifier = Modifier.fillMaxWidth().testTag("register_email_input"),
                     placeholder = { Text("tu@email.com", color = Color(0xFF475569)) },
                     singleLine = true,
                     textStyle = MaterialTheme.typography.bodyLarge.copy(color = Color.White),
@@ -164,30 +221,25 @@ fun RegisterScreen(
                         keyboardType = KeyboardType.Email,
                         imeAction = ImeAction.Next
                     ),
-                    isError = emailError,
-                    supportingText = { 
-                        if (emailError) {
-                            Text("Formato de email inválido", color = Color(0xFFFCA5A5))
-                        }
-                    },
                     shape = RoundedCornerShape(12.dp)
                 )
-                
+
                 Spacer(modifier = Modifier.height(16.dp))
-                
+
                 // Password field
                 Text(
-                    text = "Contraseña",
+                    text = "Password",
                     style = MaterialTheme.typography.labelMedium,
                     color = Color(0xFF94A3B8)
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 OutlinedTextField(
                     value = password,
-                    onValueChange = { password = it },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .testTag("register_password_input"),
+                    onValueChange = {
+                        password = it
+                        passwordError = null
+                    },
+                    modifier = Modifier.fillMaxWidth().testTag("register_password_input"),
                     placeholder = { Text("••••••••", color = Color(0xFF475569)) },
                     singleLine = true,
                     visualTransformation = PasswordVisualTransformation(),
@@ -207,20 +259,21 @@ fun RegisterScreen(
                 )
 
                 Spacer(modifier = Modifier.height(16.dp))
-                
+
                 // Repeat Password field
                 Text(
-                    text = "Repetir Contraseña",
+                    text = "Repeat Password",
                     style = MaterialTheme.typography.labelMedium,
                     color = Color(0xFF94A3B8)
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 OutlinedTextField(
                     value = repeatPassword,
-                    onValueChange = { repeatPassword = it },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .testTag("register_repeat_password_input"),
+                    onValueChange = {
+                        repeatPassword = it
+                        passwordError = null
+                    },
+                    modifier = Modifier.fillMaxWidth().testTag("register_repeat_password_input"),
                     placeholder = { Text("••••••••", color = Color(0xFF475569)) },
                     singleLine = true,
                     visualTransformation = PasswordVisualTransformation(),
@@ -236,12 +289,6 @@ fun RegisterScreen(
                         keyboardType = KeyboardType.Password,
                         imeAction = ImeAction.Done
                     ),
-                    isError = passwordError,
-                    supportingText = { 
-                        if (passwordError) {
-                            Text("Las contraseñas no coinciden o están vacías", color = Color(0xFFFCA5A5))
-                        }
-                    },
                     shape = RoundedCornerShape(12.dp)
                 )
 
@@ -249,16 +296,23 @@ fun RegisterScreen(
 
                 Button(
                     onClick = {
-                        val isEmailValid = email.isNotBlank() && android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()
-                        val isPasswordValid = password.isNotBlank() && password == repeatPassword
-                        
-                        emailError = !isEmailValid
-                        passwordError = !isPasswordValid
-                        
-                        if (isEmailValid && isPasswordValid) {
-                            onRegisterSuccess()
+                        val isUsernameValid = username.isNotBlank()
+                        val isEmailValid = android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()
+                        val passwordsValid = password.isNotBlank() && repeatPassword.isNotBlank() && password == repeatPassword
+
+                        usernameError = if (isUsernameValid) null else "El nombre de usuario no puede estar vacío"
+                        emailError = if (isEmailValid) null else "Formato de email inválido"
+                        passwordError = if (passwordsValid) null else "Las contraseñas no coinciden o están vacías"
+
+                        if (isUsernameValid && isEmailValid && passwordsValid) {
+                            if (viewModel != null) {
+                                viewModel.register(username, email, password, repeatPassword)
+                            } else {
+                                onRegisterSuccess()
+                            }
                         }
                     },
+                    enabled = uiState !is RegisterUiState.Loading,
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(50.dp)
@@ -269,29 +323,35 @@ fun RegisterScreen(
                     ),
                     shape = RoundedCornerShape(12.dp)
                 ) {
-                    Text(
-                        text = "Registrarse", 
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 16.sp
-                    )
+                    if (uiState is RegisterUiState.Loading) {
+                        CircularProgressIndicator(
+                            color = Color.White,
+                            strokeWidth = 2.dp,
+                            modifier = Modifier.height(20.dp)
+                        )
+                    } else {
+                        Text(
+                            text = "Sign up",
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 16.sp
+                        )
+                    }
                 }
 
                 Spacer(modifier = Modifier.height(16.dp))
-                
+
                 TextButton(
                     onClick = onNavigateToLogin,
-                    modifier = Modifier
-                        .align(Alignment.CenterHorizontally)
-                        .testTag("register_login_nav_button")
+                    modifier = Modifier.align(Alignment.CenterHorizontally).testTag("register_login_nav_button")
                 ) {
                     Text(
-                        text = "¿Ya tienes cuenta? Inicia sesión",
+                        text = "Already have an account? Log in",
                         color = Color(0xFF818CF8),
                         style = MaterialTheme.typography.bodyMedium
                     )
                 }
             }
-            
+
             Spacer(modifier = Modifier.height(32.dp))
         }
     }

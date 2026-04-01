@@ -2,18 +2,25 @@ package com.app.astrojournal.ui.viewmodels
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.app.astrojournal.data.model.*
+import com.app.astrojournal.data.model.Astro
+import com.app.astrojournal.data.model.AstroEvent
 import com.app.astrojournal.utils.MoonCalculator
 import com.app.astrojournal.utils.MoonPhaseInfo
-import io.github.cosinekitty.astronomy.*
+import io.github.cosinekitty.astronomy.Body
+import io.github.cosinekitty.astronomy.Time
+import io.github.cosinekitty.astronomy.searchGlobalSolarEclipse
+import io.github.cosinekitty.astronomy.searchLunarEclipse
+import io.github.cosinekitty.astronomy.searchPeakMagnitude
+import io.github.cosinekitty.astronomy.searchRelativeLongitude
+import io.github.cosinekitty.astronomy.seasons
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
-import java.util.*
+import java.util.Date
+import java.util.Locale
 
-// Sealed class para representar los diferentes estados de la UI
 sealed class UiState {
     object Loading : UiState()
     data class Success(val data: Astro) : UiState()
@@ -32,9 +39,9 @@ private fun defaultUpcomingEventsProvider(startTime: Time): List<AstroEvent> {
     yearsToSearch.forEach { year ->
         val s = seasons(year)
         listOf(
-            Triple("March Equinox", "Inicio de la primavera (N) / otoño (S)", s.marchEquinox),
+            Triple("March Equinox", "Inicio de la primavera (N) / otono (S)", s.marchEquinox),
             Triple("June Solstice", "Inicio del verano (N) / invierno (S)", s.juneSolstice),
-            Triple("September Equinox", "Inicio del otoño (N) / primavera (S)", s.septemberEquinox),
+            Triple("September Equinox", "Inicio del otono (N) / primavera (S)", s.septemberEquinox),
             Triple("December Solstice", "Inicio del invierno (N) / verano (S)", s.decemberSolstice)
         ).forEach { (name, desc, time) ->
             if (time.toMillisecondsSince1970() > startTime.toMillisecondsSince1970()) {
@@ -44,7 +51,7 @@ private fun defaultUpcomingEventsProvider(startTime: Time): List<AstroEvent> {
                         desc,
                         df.format(Date(time.toMillisecondsSince1970())),
                         time.toMillisecondsSince1970(),
-                        EventType.OTHER
+                        com.app.astrojournal.data.model.EventType.OTHER
                     )
                 )
             }
@@ -58,7 +65,7 @@ private fun defaultUpcomingEventsProvider(startTime: Time): List<AstroEvent> {
             "Eclipse solar global (${solar.kind})",
             df.format(Date(solar.peak.toMillisecondsSince1970())),
             solar.peak.toMillisecondsSince1970(),
-            EventType.CONJUNCTION
+            com.app.astrojournal.data.model.EventType.CONJUNCTION
         )
     )
 
@@ -69,7 +76,7 @@ private fun defaultUpcomingEventsProvider(startTime: Time): List<AstroEvent> {
             "Eclipse lunar (${lunar.kind})",
             df.format(Date(lunar.peak.toMillisecondsSince1970())),
             lunar.peak.toMillisecondsSince1970(),
-            EventType.MOON_PHASE
+            com.app.astrojournal.data.model.EventType.MOON_PHASE
         )
     )
 
@@ -78,10 +85,10 @@ private fun defaultUpcomingEventsProvider(startTime: Time): List<AstroEvent> {
         events.add(
             AstroEvent(
                 "$planet Opposition",
-                "El planeta $planet está en su punto más cercano a la Tierra",
+                "El planeta $planet esta en su punto mas cercano a la Tierra",
                 df.format(Date(opp.toMillisecondsSince1970())),
                 opp.toMillisecondsSince1970(),
-                EventType.PLANET
+                com.app.astrojournal.data.model.EventType.PLANET
             )
         )
     }
@@ -91,14 +98,13 @@ private fun defaultUpcomingEventsProvider(startTime: Time): List<AstroEvent> {
         events.add(
             AstroEvent(
                 "Venus Peak Brightness",
-                "Máximo brillo de Venus en el cielo",
+                "Maximo brillo de Venus en el cielo",
                 df.format(Date(venusPeak.time.toMillisecondsSince1970())),
                 venusPeak.time.toMillisecondsSince1970(),
-                EventType.PLANET
+                com.app.astrojournal.data.model.EventType.PLANET
             )
         )
     } catch (_: Exception) {
-        // Solo Venus soportado.
     }
 
     return events
@@ -110,21 +116,15 @@ class HomeViewModel(
     private val loadingDelayMs: Long = 500L
 ) : ViewModel() {
 
-    // Estado de la UI (Loading, Success, Error)
     private val _uiState = MutableStateFlow<UiState>(UiState.Loading)
     val uiState: StateFlow<UiState> = _uiState
 
-    // Mantener moonData para compatibilidad con el código existente
     private val _moonData = MutableStateFlow<Astro?>(null)
     val moonData: StateFlow<Astro?> = _moonData
 
-    // Nueva lista de eventos astronómicos próximos
     private val _upcomingEvents = MutableStateFlow<List<AstroEvent>>(emptyList())
     val upcomingEvents: StateFlow<List<AstroEvent>> = _upcomingEvents
 
-    /**
-     * Obtiene los datos de la luna y eventos próximos usando cálculos astronómicos locales.
-     */
     fun fetchMoonData() {
         viewModelScope.launch {
             _uiState.value = UiState.Loading
@@ -134,7 +134,8 @@ class HomeViewModel(
             }
 
             try {
-                val moonPhaseInfo = moonPhaseProvider(Date())
+                val now = Date()
+                val moonPhaseInfo = moonPhaseProvider(now)
 
                 val astroData = Astro(
                     moon_age = moonPhaseInfo.moonAge,
@@ -142,7 +143,7 @@ class HomeViewModel(
                     moon_phase = moonPhaseInfo.phaseName
                 )
 
-                val startTime = Time.fromMillisecondsSince1970(Date().time)
+                val startTime = Time.fromMillisecondsSince1970(now.time)
                 _upcomingEvents.value = upcomingEventsProvider(startTime)
                     .sortedBy { it.timestamp }
                     .take(7)
