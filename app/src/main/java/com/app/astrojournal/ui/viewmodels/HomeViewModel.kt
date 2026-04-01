@@ -13,12 +13,10 @@ import io.github.cosinekitty.astronomy.searchLunarEclipse
 import io.github.cosinekitty.astronomy.searchPeakMagnitude
 import io.github.cosinekitty.astronomy.searchRelativeLongitude
 import io.github.cosinekitty.astronomy.seasons
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -137,9 +135,7 @@ class HomeViewModel(
 
             try {
                 val now = Date()
-                val moonPhaseInfo = withContext(Dispatchers.Default) {
-                    moonPhaseProvider(now)
-                }
+                val moonPhaseInfo = moonPhaseProvider(now)
 
                 val astroData = Astro(
                     moon_age = moonPhaseInfo.moonAge,
@@ -148,11 +144,9 @@ class HomeViewModel(
                 )
 
                 val startTime = Time.fromMillisecondsSince1970(now.time)
-                _upcomingEvents.value = withContext(Dispatchers.Default) {
-                    upcomingEventsProvider(startTime)
-                        .sortedBy { it.timestamp }
-                        .take(7)
-                }
+                _upcomingEvents.value = upcomingEventsProvider(startTime)
+                    .sortedBy { it.timestamp }
+                    .take(7)
 
                 _moonData.value = astroData
                 _uiState.value = UiState.Success(astroData)

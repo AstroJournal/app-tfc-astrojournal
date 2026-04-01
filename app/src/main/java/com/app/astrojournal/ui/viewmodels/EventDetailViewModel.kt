@@ -13,6 +13,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
+import java.util.concurrent.ConcurrentHashMap
 
 sealed class EventDetailUiState {
     data object Loading : EventDetailUiState()
@@ -31,6 +32,8 @@ class EventDetailViewModel(
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO
 ) : ViewModel() {
 
+    private val addedMessageShownEventIds = mutableSetOf<Long>()
+
     var collectibles by mutableStateOf<List<Collectible>>(emptyList())
         private set
 
@@ -48,6 +51,7 @@ class EventDetailViewModel(
         private set
 
     private val dbMutex = Mutex()
+    private val latestSaveVersionByEvent = ConcurrentHashMap<Long, Long>()
 
     init {
         loadCollectibles()
@@ -128,8 +132,10 @@ class EventDetailViewModel(
         agended: Boolean,
         observed: Boolean
     ) {
+        val version = (latestSaveVersionByEvent[eventId] ?: 0L) + 1L
+        latestSaveVersionByEvent[eventId] = version
         viewModelScope.launch {
-            saveEventState(eventId, eventName, date, note, agended, observed)
+            saveEventState(eventId, eventName, date, note, agended, observed, version)
         }
     }
 
@@ -139,9 +145,13 @@ class EventDetailViewModel(
         date: String,
         note: String,
         agended: Boolean,
-        observed: Boolean
+        observed: Boolean,
+        version: Long = latestSaveVersionByEvent[eventId] ?: 0L
     ) {
         dbMutex.withLock {
+            val latestVersion = latestSaveVersionByEvent[eventId] ?: 0L
+            if (version < latestVersion) return
+
             withContext(ioDispatcher) {
                 val existing = repo.getByEventId(eventId)
 
@@ -188,6 +198,12 @@ class EventDetailViewModel(
 
     fun updateAgendaFilter(filter: AgendaFilter) {
         agendaFilter = filter
+    }
+
+    fun hasShownAddedMessage(eventId: Long): Boolean = addedMessageShownEventIds.contains(eventId)
+
+    fun markAddedMessageShown(eventId: Long) {
+        addedMessageShownEventIds.add(eventId)
     }
 
 }

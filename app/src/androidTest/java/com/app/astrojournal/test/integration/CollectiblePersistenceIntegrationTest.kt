@@ -7,7 +7,7 @@ import com.app.astrojournal.ui.viewmodels.EventDetailViewModel
 import com.astrojournal.shared.data.db.AstrojournalDatabase
 import com.astrojournal.shared.data.db.DatabaseDriverFactory
 import kotlinx.coroutines.runBlocking
-import org.junit.After
+import org.junit.Before
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
@@ -19,16 +19,16 @@ import org.junit.runner.RunWith
 class CollectiblePersistenceIntegrationTest {
 
     private val context = ApplicationProvider.getApplicationContext<android.content.Context>()
+    private lateinit var repo: CollectibleRepository
 
-    @After
-    fun tearDown() {
-        context.deleteDatabase("astrojournal.db")
+    @Before
+    fun setUp() {
+        repo = createRepository()
+        repo.getAll().forEach { repo.deleteById(it.id) }
     }
 
     @Test
     fun sqlite_saveReadUpdateEventObservedAndNotes() {
-        val repo = createRepository()
-
         repo.insertCollectible(
             eventId = 501L,
             eventName = "Solar Eclipse",
@@ -53,9 +53,7 @@ class CollectiblePersistenceIntegrationTest {
 
     @Test
     fun sqlite_dataPersistsWhenRepositoryIsRecreated() {
-        val repo1 = createRepository()
-
-        repo1.insertCollectible(
+        repo.insertCollectible(
             eventId = 900L,
             eventName = "Lunar Eclipse",
             observationDate = "2027-03-01",
@@ -74,8 +72,6 @@ class CollectiblePersistenceIntegrationTest {
 
     @Test
     fun sqlite_deleteRemovesNoteAndEntry() {
-        val repo = createRepository()
-
         repo.insertCollectible(
             eventId = 777L,
             eventName = "Venus Event",
@@ -94,7 +90,6 @@ class CollectiblePersistenceIntegrationTest {
 
     @Test
     fun sqlite_viewModelSaveAvoidsDuplicatesForSameEventId() = runBlocking {
-        val repo = createRepository()
         val viewModel = EventDetailViewModel(repo)
 
         viewModel.saveFullEventState(
@@ -115,8 +110,7 @@ class CollectiblePersistenceIntegrationTest {
             observed = true
         )
 
-        Thread.sleep(300)
-        val rows = repo.getAll().filter { it.eventId == 321L }
+        val rows = waitForRows(eventId = 321L)
 
         assertEquals(1, rows.size)
         assertEquals("updated", rows.first().notes)
@@ -127,5 +121,14 @@ class CollectiblePersistenceIntegrationTest {
         val driver = DatabaseDriverFactory(context).createDriver()
         val database = AstrojournalDatabase(driver)
         return CollectibleRepository(database.collectibleQueries)
+    }
+
+    private fun waitForRows(eventId: Long): List<com.astrojournal.shared.data.db.Collectible> {
+        repeat(40) {
+            val rows = repo.getAll().filter { it.eventId == eventId }
+            if (rows.isNotEmpty()) return rows
+            Thread.sleep(50)
+        }
+        return repo.getAll().filter { it.eventId == eventId }
     }
 }

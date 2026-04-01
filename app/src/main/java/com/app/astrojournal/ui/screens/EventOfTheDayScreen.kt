@@ -38,6 +38,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
@@ -75,7 +76,6 @@ fun EventOfTheDayContent(
     currentScreen: String = "eventOfTheDay",
     onNavigate: (String) -> Unit = {}
 ) {
-    var visibilityExpanded by remember { mutableStateOf(false) }
     val scrollState = rememberScrollState()
 
     Scaffold(
@@ -106,9 +106,7 @@ fun EventOfTheDayContent(
             ) {
                 Spacer(modifier = Modifier.height(24.dp))
                 EventOfDayVisibilitySection(
-                    state = visibilityState,
-                    expanded = visibilityExpanded,
-                    onToggleExpanded = { visibilityExpanded = !visibilityExpanded }
+                    state = visibilityState
                 )
 
                 Spacer(modifier = Modifier.height(12.dp))
@@ -234,10 +232,9 @@ private fun EventOfDayApodSection(
 
 @Composable
 private fun EventOfDayVisibilitySection(
-    state: RemoteUiState<VisibilityUi>,
-    expanded: Boolean,
-    onToggleExpanded: () -> Unit
+    state: RemoteUiState<VisibilityUi>
 ) {
+    var expanded by remember { mutableStateOf(false) }
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -245,7 +242,7 @@ private fun EventOfDayVisibilitySection(
             .clip(RoundedCornerShape(18.dp))
             .background(GlassPanelBg)
             .border(1.dp, White10, RoundedCornerShape(18.dp))
-            .clickable { onToggleExpanded() }
+            .clickable { expanded = !expanded }
             .padding(14.dp)
     ) {
         Row(
@@ -263,13 +260,19 @@ private fun EventOfDayVisibilitySection(
 
         if (expanded) {
             Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = "Visibility details",
+                color = Color(0xFFCBD5E1),
+                style = MaterialTheme.typography.bodySmall,
+                modifier = Modifier.testTag("event_of_day_visibility_details")
+            )
+            Spacer(modifier = Modifier.height(6.dp))
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(12.dp))
                     .background(SurfaceDark)
                     .padding(12.dp)
-                    .testTag("event_of_day_visibility_details")
             ) {
                 when (state) {
                     is RemoteUiState.Loading -> Text(

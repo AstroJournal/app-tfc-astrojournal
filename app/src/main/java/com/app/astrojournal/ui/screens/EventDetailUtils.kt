@@ -1,6 +1,7 @@
 package com.app.astrojournal.ui.screens
 
 import androidx.compose.runtime.Composable
+import com.app.astrojournal.R
 import com.app.astrojournal.data.model.EventType
 import com.app.astrojournal.ui.components.CometIcon
 import com.app.astrojournal.ui.components.PlanetIcon
@@ -55,5 +56,15 @@ fun getCountdownText(timestamp: Long): String {
         days == 0L -> "Es hoy"
         days == -1L -> "Fue ayer"
         else -> "Fue hace ${-days} dias"
+    }
+}
+
+fun getEventBackgroundImage(eventName: String): Int {
+    val normalized = eventName.lowercase(Locale.ROOT)
+    return when {
+        "eclipse" in normalized -> R.drawable.eclipse
+        "moon" in normalized || "luna" in normalized || "quarter" in normalized || "gibbous" in normalized || "crescent" in normalized -> R.drawable.full_moon
+        "mars" in normalized || "jupiter" in normalized || "saturn" in normalized || "venus" in normalized || "opposition" in normalized -> R.drawable.moon
+        else -> R.drawable.moon
     }
 }

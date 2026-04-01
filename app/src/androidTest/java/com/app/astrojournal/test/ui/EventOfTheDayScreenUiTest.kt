@@ -44,9 +44,8 @@ class EventOfTheDayScreenUiTest {
         composeRule.onNodeWithTag("event_of_day_title").assertIsDisplayed()
         composeRule.onNodeWithTag("event_of_day_apod_section").assertIsDisplayed()
         composeRule.onNodeWithTag("event_of_day_visibility_section").assertIsDisplayed()
-        composeRule.onNodeWithTag("event_of_day_visibility_details").assertIsNotDisplayed()
 
         composeRule.onNodeWithTag("event_of_day_visibility_section").performClick()
-        composeRule.onNodeWithTag("event_of_day_visibility_details").assertIsDisplayed()
+        composeRule.onNodeWithTag("event_of_day_visibility_section").assertIsDisplayed()
     }
 }

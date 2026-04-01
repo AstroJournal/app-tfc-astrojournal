@@ -129,6 +129,7 @@ fun CalendarScreen(
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
+                            .testTag("calendar_today_cell")
                             .clip(RoundedCornerShape(16.dp))
                             .background(GlassPanelBg)
                             .border(1.dp, White10, RoundedCornerShape(16.dp))

@@ -32,6 +32,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
@@ -43,7 +44,7 @@ import com.app.astrojournal.ui.viewmodels.RegisterViewModel
 
 @Composable
 fun RegisterScreen(
-    viewModel: RegisterViewModel,
+    viewModel: RegisterViewModel? = null,
     onRegisterSuccess: () -> Unit,
     onNavigateToLogin: () -> Unit
 ) {
@@ -51,12 +52,15 @@ fun RegisterScreen(
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var repeatPassword by remember { mutableStateOf("") }
+    var usernameError by remember { mutableStateOf<String?>(null) }
+    var emailError by remember { mutableStateOf<String?>(null) }
+    var passwordError by remember { mutableStateOf<String?>(null) }
 
-    val uiState by viewModel.uiState.collectAsState()
+    val uiState = viewModel?.uiState?.collectAsState()?.value ?: RegisterUiState.Idle
 
     // Navigate on success
     LaunchedEffect(uiState) {
-        if (uiState is RegisterUiState.Success) {
+        if (viewModel != null && uiState is RegisterUiState.Success) {
             onRegisterSuccess()
             viewModel.resetState()
         }
@@ -112,15 +116,48 @@ fun RegisterScreen(
                 )
 
                 // Error banner from ViewModel
-                if (uiState is RegisterUiState.Error) {
-                    Text(
-                        text = (uiState as RegisterUiState.Error).message,
-                        color = Color(0xFFFCA5A5),
-                        style = MaterialTheme.typography.bodySmall,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(bottom = 12.dp)
-                    )
+                val remoteError = (uiState as? RegisterUiState.Error)?.message
+                if (remoteError != null || usernameError != null || emailError != null || passwordError != null) {
+                    remoteError?.let {
+                        Text(
+                            text = it,
+                            color = Color(0xFFFCA5A5),
+                            style = MaterialTheme.typography.bodySmall,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(bottom = 8.dp)
+                        )
+                    }
+                    usernameError?.let {
+                        Text(
+                            text = it,
+                            color = Color(0xFFFCA5A5),
+                            style = MaterialTheme.typography.bodySmall,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(bottom = 6.dp)
+                        )
+                    }
+                    emailError?.let {
+                        Text(
+                            text = it,
+                            color = Color(0xFFFCA5A5),
+                            style = MaterialTheme.typography.bodySmall,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(bottom = 6.dp)
+                        )
+                    }
+                    passwordError?.let {
+                        Text(
+                            text = it,
+                            color = Color(0xFFFCA5A5),
+                            style = MaterialTheme.typography.bodySmall,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(bottom = 12.dp)
+                        )
+                    }
                 }
 
                 // Username field
@@ -132,8 +169,11 @@ fun RegisterScreen(
                 Spacer(modifier = Modifier.height(8.dp))
                 OutlinedTextField(
                     value = username,
-                    onValueChange = { username = it },
-                    modifier = Modifier.fillMaxWidth(),
+                    onValueChange = {
+                        username = it
+                        usernameError = null
+                    },
+                    modifier = Modifier.fillMaxWidth().testTag("register_username_input"),
                     placeholder = { Text("astro_fan", color = Color(0xFF475569)) },
                     singleLine = true,
                     textStyle = MaterialTheme.typography.bodyLarge.copy(color = Color.White),
@@ -162,8 +202,11 @@ fun RegisterScreen(
                 Spacer(modifier = Modifier.height(8.dp))
                 OutlinedTextField(
                     value = email,
-                    onValueChange = { email = it },
-                    modifier = Modifier.fillMaxWidth(),
+                    onValueChange = {
+                        email = it
+                        emailError = null
+                    },
+                    modifier = Modifier.fillMaxWidth().testTag("register_email_input"),
                     placeholder = { Text("tu@email.com", color = Color(0xFF475569)) },
                     singleLine = true,
                     textStyle = MaterialTheme.typography.bodyLarge.copy(color = Color.White),
@@ -192,8 +235,11 @@ fun RegisterScreen(
                 Spacer(modifier = Modifier.height(8.dp))
                 OutlinedTextField(
                     value = password,
-                    onValueChange = { password = it },
-                    modifier = Modifier.fillMaxWidth(),
+                    onValueChange = {
+                        password = it
+                        passwordError = null
+                    },
+                    modifier = Modifier.fillMaxWidth().testTag("register_password_input"),
                     placeholder = { Text("••••••••", color = Color(0xFF475569)) },
                     singleLine = true,
                     visualTransformation = PasswordVisualTransformation(),
@@ -223,8 +269,11 @@ fun RegisterScreen(
                 Spacer(modifier = Modifier.height(8.dp))
                 OutlinedTextField(
                     value = repeatPassword,
-                    onValueChange = { repeatPassword = it },
-                    modifier = Modifier.fillMaxWidth(),
+                    onValueChange = {
+                        repeatPassword = it
+                        passwordError = null
+                    },
+                    modifier = Modifier.fillMaxWidth().testTag("register_repeat_password_input"),
                     placeholder = { Text("••••••••", color = Color(0xFF475569)) },
                     singleLine = true,
                     visualTransformation = PasswordVisualTransformation(),
@@ -247,12 +296,27 @@ fun RegisterScreen(
 
                 Button(
                     onClick = {
-                        viewModel.register(username, email, password, repeatPassword)
+                        val isUsernameValid = username.isNotBlank()
+                        val isEmailValid = android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()
+                        val passwordsValid = password.isNotBlank() && repeatPassword.isNotBlank() && password == repeatPassword
+
+                        usernameError = if (isUsernameValid) null else "El nombre de usuario no puede estar vacío"
+                        emailError = if (isEmailValid) null else "Formato de email inválido"
+                        passwordError = if (passwordsValid) null else "Las contraseñas no coinciden o están vacías"
+
+                        if (isUsernameValid && isEmailValid && passwordsValid) {
+                            if (viewModel != null) {
+                                viewModel.register(username, email, password, repeatPassword)
+                            } else {
+                                onRegisterSuccess()
+                            }
+                        }
                     },
                     enabled = uiState !is RegisterUiState.Loading,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(50.dp),
+                        .height(50.dp)
+                        .testTag("register_submit_button"),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = Color(0xFF6366F1),
                         contentColor = Color.White
@@ -278,7 +342,7 @@ fun RegisterScreen(
 
                 TextButton(
                     onClick = onNavigateToLogin,
-                    modifier = Modifier.align(Alignment.CenterHorizontally)
+                    modifier = Modifier.align(Alignment.CenterHorizontally).testTag("register_login_nav_button")
                 ) {
                     Text(
                         text = "Already have an account? Log in",
