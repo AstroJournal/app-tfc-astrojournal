@@ -100,11 +100,10 @@ fun EventOfTheDayContent(
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(innerPadding)
                     .padding(horizontal = 20.dp)
                     .verticalScroll(scrollState)
             ) {
-                Spacer(modifier = Modifier.height(24.dp))
+                Spacer(modifier = Modifier.height(innerPadding.calculateTopPadding() + 24.dp))
                 EventOfDayVisibilitySection(
                     state = visibilityState
                 )
@@ -115,6 +114,8 @@ fun EventOfTheDayContent(
                     state = apodState,
                     onRetry = onRetry
                 )
+                
+                Spacer(modifier = Modifier.height(innerPadding.calculateBottomPadding() + 24.dp))
             }
         }
     }
