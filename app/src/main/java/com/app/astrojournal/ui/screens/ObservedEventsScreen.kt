@@ -9,6 +9,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material.icons.outlined.Visibility
 import androidx.compose.material3.*
@@ -42,10 +43,43 @@ fun ObservedEventsScreen(
 ) {
     val observed = viewModel.observed.collectAsState()
     var editingNoteFor by remember { mutableStateOf<Collectible?>(null) }
+    var removingFor by remember { mutableStateOf<Collectible?>(null) }
 
     // Reload every time this screen is shown so newly observed events appear
     LaunchedEffect(Unit) {
         viewModel.load()
+    }
+
+    if (removingFor != null) {
+        AlertDialog(
+            onDismissRequest = { removingFor = null },
+            title = {
+                Text(
+                    text = "Remove from observed",
+                    style = MaterialTheme.typography.titleMedium.copy(color = Color.White)
+                )
+            },
+            text = {
+                Text(
+                    "Are you sure you want to remove '${removingFor?.eventName}' from the observed events list? It will return to the pending past events list.",
+                    color = Color.White
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    viewModel.unmarkAsObserved(removingFor!!.id)
+                    removingFor = null
+                }) {
+                    Text("Remove", color = Color(0xFFFCA5A5))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { removingFor = null }) {
+                    Text("Cancel", color = Color(0xFF94A3B8))
+                }
+            },
+            containerColor = Color(0xFF1E293B)
+        )
     }
 
     if (editingNoteFor != null) {
@@ -168,7 +202,8 @@ fun ObservedEventsScreen(
                     items(observed.value) { collectible ->
                         ObservedEventItem(
                             collectible = collectible,
-                            onEditClick = { editingNoteFor = collectible }
+                            onEditClick = { editingNoteFor = collectible },
+                            onRemoveClick = { removingFor = collectible }
                         )
                     }
                 }
@@ -180,7 +215,8 @@ fun ObservedEventsScreen(
 @Composable
 fun ObservedEventItem(
     collectible: Collectible,
-    onEditClick: () -> Unit
+    onEditClick: () -> Unit,
+    onRemoveClick: () -> Unit
 ) {
     Row(
         modifier = Modifier
@@ -233,7 +269,15 @@ fun ObservedEventItem(
             Icon(
                 imageVector = Icons.Outlined.Edit,
                 contentDescription = "Edit Note",
-                tint = TextGray400
+                tint = Color(0xFF93C5FD)
+            )
+        }
+
+        IconButton(onClick = onRemoveClick) {
+            Icon(
+                imageVector = androidx.compose.material.icons.Icons.Filled.Delete,
+                contentDescription = "Remove Observed",
+                tint = Color(0xFFFCA5A5)
             )
         }
     }

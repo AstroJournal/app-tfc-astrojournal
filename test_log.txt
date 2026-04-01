@@ -1,7 +1,6 @@
+> Task :app:checkKotlinGradlePluginConfigurationErrors SKIPPED
 > Task :app:preBuild UP-TO-DATE
 > Task :app:preDebugBuild UP-TO-DATE
-> Task :app:mergeDebugNativeDebugMetadata NO-SOURCE
-> Task :app:checkKotlinGradlePluginConfigurationErrors SKIPPED
 > Task :shared:androidPreBuild UP-TO-DATE
 > Task :shared:preAndroidMainBuild UP-TO-DATE
 > Task :shared:writeAndroidMainAarMetadata UP-TO-DATE
@@ -23,24 +22,9 @@
 > Task :shared:checkKotlinGradlePluginConfigurationErrors SKIPPED
 > Task :shared:generateCommonMainAstrojournalDatabaseInterface UP-TO-DATE
 > Task :app:javaPreCompileDebug UP-TO-DATE
-> Task :app:mergeDebugShaders UP-TO-DATE
-> Task :app:compileDebugShaders NO-SOURCE
-> Task :app:generateDebugAssets UP-TO-DATE
-> Task :app:mergeDebugAssets UP-TO-DATE
-> Task :app:compressDebugAssets UP-TO-DATE
-> Task :app:checkDebugDuplicateClasses UP-TO-DATE
-> Task :app:desugarDebugFileDependencies UP-TO-DATE
-> Task :app:mergeExtDexDebug UP-TO-DATE
-> Task :app:mergeDebugJniLibFolders UP-TO-DATE
-> Task :shared:mergeAndroidMainJniLibFolders UP-TO-DATE
-> Task :shared:mergeAndroidMainNativeLibs NO-SOURCE
-> Task :shared:copyAndroidMainJniLibsProjectOnly UP-TO-DATE
 > Task :app:processDebugManifestForPackage
-> Task :app:mergeDebugNativeLibs UP-TO-DATE
-> Task :app:stripDebugDebugSymbols UP-TO-DATE
-> Task :app:validateSigningDebug UP-TO-DATE
-> Task :app:writeDebugAppMetadata UP-TO-DATE
-> Task :app:writeDebugSigningConfigVersions UP-TO-DATE
+> Task :app:preDebugUnitTestBuild UP-TO-DATE
+> Task :app:javaPreCompileDebugUnitTest
 > Task :app:processDebugResources
 
 > Task :shared:compileAndroidMain
@@ -49,8 +33,7 @@ w: file:///D:/Users/Documentos/UNIR/SEGUNDO/Proyecto_intermodular/Repositorio_As
 
 > Task :shared:processAndroidMainJavaRes UP-TO-DATE
 > Task :shared:bundleAndroidMainClassesToCompileJar
-> Task :shared:bundleLibRuntimeToDirAndroidMain
-> Task :app:mergeLibDexDebug
+> Task :shared:bundleAndroidMainClassesToRuntimeJar
 
 > Task :app:compileDebugKotlin
 w: file:///D:/Users/Documentos/UNIR/SEGUNDO/Proyecto_intermodular/Repositorio_Astrojournal/app-tfc-astrojournal/app/src/main/java/com/app/astrojournal/ui/components/BottomNavigationComponent.kt:107:43 'val Icons.Outlined.FormatListBulleted: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Outlined.FormatListBulleted.
@@ -61,12 +44,12 @@ w: file:///D:/Users/Documentos/UNIR/SEGUNDO/Proyecto_intermodular/Repositorio_As
 
 > Task :app:compileDebugJavaWithJavac NO-SOURCE
 > Task :app:processDebugJavaRes UP-TO-DATE
-> Task :app:mergeDebugJavaResource UP-TO-DATE
-> Task :app:dexBuilderDebug
-> Task :app:mergeProjectDexDebug
-> Task :app:packageDebug
-> Task :app:createDebugApkListingFileRedirect
-> Task :app:assembleDebug
+> Task :app:bundleDebugClassesToRuntimeJar
+> Task :app:bundleDebugClassesToCompileJar
+> Task :app:compileDebugUnitTestKotlin
+> Task :app:compileDebugUnitTestJavaWithJavac NO-SOURCE
+> Task :app:processDebugUnitTestJavaRes
+> Task :app:testDebugUnitTest
 
-BUILD SUCCESSFUL in 15s
-46 actionable tasks: 13 executed, 33 up-to-date
+BUILD SUCCESSFUL in 19s
+32 actionable tasks: 14 executed, 18 up-to-date
