@@ -44,7 +44,7 @@ fun AstroBottomNavigation(
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .height(100.dp)
+            .height(88.dp)
     ) {
         // Gradient overlay for bottom fade
         Box(
@@ -64,8 +64,8 @@ fun AstroBottomNavigation(
         // Glass panel container
         Box(
             modifier = Modifier
-                .align(Alignment.Center)
-                .padding(bottom = 24.dp)
+                .align(Alignment.BottomCenter)
+                .padding(bottom = 12.dp)
                 .height(64.dp)
                 .fillMaxWidth(0.85f)
                 .clip(CircleShape)

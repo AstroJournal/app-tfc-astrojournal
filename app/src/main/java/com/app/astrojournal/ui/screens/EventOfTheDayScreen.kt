@@ -52,6 +52,8 @@ import com.app.astrojournal.ui.viewmodels.EventOfTheDayViewModel
 import com.app.astrojournal.ui.viewmodels.RemoteUiState
 import coil.compose.AsyncImage
 import android.os.SystemClock
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.lazy.LazyColumn
 
 @Composable
 fun EventOfTheDayScreen(
@@ -97,25 +99,29 @@ fun EventOfTheDayContent(
                 contentScale = ContentScale.Crop
             )
 
-            Column(
+            LazyColumn(
                 modifier = Modifier
-                    .fillMaxSize()
-                    .padding(horizontal = 20.dp)
-                    .verticalScroll(scrollState)
+                    .fillMaxSize(),
+                contentPadding = PaddingValues(
+                    top = innerPadding.calculateTopPadding() + 24.dp,
+                    bottom = innerPadding.calculateBottomPadding() + 24.dp,
+                    start = 20.dp,
+                    end = 20.dp
+                ),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                Spacer(modifier = Modifier.height(innerPadding.calculateTopPadding() + 24.dp))
-                EventOfDayVisibilitySection(
-                    state = visibilityState
-                )
+                item {
+                    EventOfDayVisibilitySection(
+                        state = visibilityState
+                    )
+                }
 
-                Spacer(modifier = Modifier.height(12.dp))
-
-                EventOfDayApodSection(
-                    state = apodState,
-                    onRetry = onRetry
-                )
-                
-                Spacer(modifier = Modifier.height(innerPadding.calculateBottomPadding() + 24.dp))
+                item {
+                    EventOfDayApodSection(
+                        state = apodState,
+                        onRetry = onRetry
+                    )
+                }
             }
         }
     }

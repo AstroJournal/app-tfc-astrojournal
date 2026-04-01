@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -98,140 +99,138 @@ fun ProfileScreen(
                 contentScale = ContentScale.Crop
             )
 
-            Column(
+            LazyColumn(
                 modifier = Modifier
-                    .fillMaxSize()
-                    .padding(innerPadding)
-                    .padding(horizontal = 24.dp)
-                    .verticalScroll(scrollState), // Habilitamos el scroll aquí
+                    .fillMaxSize(),
+                contentPadding = PaddingValues(
+                    top = innerPadding.calculateTopPadding() + 40.dp,
+                    bottom = innerPadding.calculateBottomPadding() + 32.dp,
+                    start = 24.dp,
+                    end = 24.dp
+                ),
                 horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Top
+                verticalArrangement = Arrangement.spacedBy(24.dp)
             ) {
-                Spacer(modifier = Modifier.height(40.dp))
-
-                // Avatar Placeholder
-                Box(
-                    modifier = Modifier
-                        .size(120.dp)
-                        .clip(CircleShape)
-                        .background(GlassPanelBg)
-                        .border(2.dp, Indigo500.copy(alpha = 0.5f), CircleShape),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Person,
-                        contentDescription = null,
-                        modifier = Modifier.size(64.dp),
-                        tint = Indigo300
-                    )
+                item {
+                    Box(
+                        modifier = Modifier
+                            .size(120.dp)
+                            .clip(CircleShape)
+                            .background(GlassPanelBg)
+                            .border(2.dp, Indigo500.copy(alpha = 0.5f), CircleShape),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Person,
+                            contentDescription = null,
+                            modifier = Modifier.size(64.dp),
+                            tint = Indigo300
+                        )
+                    }
                 }
 
-                Spacer(modifier = Modifier.height(24.dp))
-
-                // User Info Card
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(24.dp))
-                        .background(GlassPanelBg)
-                        .border(1.dp, White10, RoundedCornerShape(24.dp))
-                        .padding(24.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Text(
-                        text = username,
-                        style = MaterialTheme.typography.headlineSmall.copy(
-                            fontWeight = FontWeight.Bold,
-                            color = TextGray100
-                        )
-                    )
-
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.padding(top = 4.dp)
+                item {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(24.dp))
+                            .background(GlassPanelBg)
+                            .border(1.dp, White10, RoundedCornerShape(24.dp))
+                            .padding(24.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        Icon(Icons.Default.Email, null, modifier = Modifier.size(14.dp), tint = TextGray400)
-                        Spacer(modifier = Modifier.width(6.dp))
                         Text(
-                            text = email,
+                            text = username,
+                            style = MaterialTheme.typography.headlineSmall.copy(
+                                fontWeight = FontWeight.Bold,
+                                color = TextGray100
+                            )
+                        )
+
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.padding(top = 4.dp)
+                        ) {
+                            Icon(Icons.Default.Email, null, modifier = Modifier.size(14.dp), tint = TextGray400)
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(
+                                text = email,
+                                style = MaterialTheme.typography.bodyMedium.copy(color = TextGray400)
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.height(16.dp))
+
+                        Text(
+                            text = "Observed events: $count",
                             style = MaterialTheme.typography.bodyMedium.copy(color = TextGray400)
                         )
-                    }
 
-                    Spacer(modifier = Modifier.height(16.dp))
+                        Spacer(modifier = Modifier.height(16.dp))
 
-                    Text(
-                        text = "Observed events: $count",
-                        style = MaterialTheme.typography.bodyMedium.copy(color = TextGray400)
-                    )
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier
+                                .background(rankColor.copy(alpha = 0.1f), RoundedCornerShape(12.dp))
+                                .border(1.dp, rankColor.copy(alpha = 0.3f), RoundedCornerShape(12.dp))
+                                .padding(horizontal = 16.dp, vertical = 8.dp)
+                        ) {
+                            Icon(Icons.Default.Stars, null, tint = rankColor, modifier = Modifier.size(20.dp))
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(text = rank.uppercase(), style = MaterialTheme.typography.labelLarge.copy(color = rankColor, fontWeight = FontWeight.ExtraBold))
+                        }
 
-                    Spacer(modifier = Modifier.height(16.dp))
+                        Spacer(modifier = Modifier.height(32.dp))
 
-                    // Rank
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier
-                            .background(rankColor.copy(alpha = 0.1f), RoundedCornerShape(12.dp))
-                            .border(1.dp, rankColor.copy(alpha = 0.3f), RoundedCornerShape(12.dp))
-                            .padding(horizontal = 16.dp, vertical = 8.dp)
-                    ) {
-                        Icon(Icons.Default.Stars, null, tint = rankColor, modifier = Modifier.size(20.dp))
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(text = rank.uppercase(), style = MaterialTheme.typography.labelLarge.copy(color = rankColor, fontWeight = FontWeight.ExtraBold))
-                    }
-
-                    Spacer(modifier = Modifier.height(32.dp))
-
-                    // Password Section
-                    Column(modifier = Modifier.fillMaxWidth()) {
-                        Text("Seguridad", style = MaterialTheme.typography.labelLarge.copy(color = Indigo300, fontWeight = FontWeight.Bold))
-                        Spacer(modifier = Modifier.height(12.dp))
-
-                        if (!isEditingPassword) {
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .background(White10, RoundedCornerShape(12.dp))
-                                    .padding(16.dp),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Column(modifier = Modifier.weight(1f)) {
-                                    Text("Contraseña actual", style = MaterialTheme.typography.labelSmall, color = TextGray400)
-                                    Text(
-                                        text = if (showPassword) password.ifEmpty { "(No disponible)" } else "••••••••",
-                                        style = MaterialTheme.typography.bodyLarge,
-                                        color = Color.White
-                                    )
-                                }
-                                Row {
-                                    IconButton(onClick = { showPassword = !showPassword }) {
-                                        Icon(if (showPassword) Icons.Default.VisibilityOff else Icons.Default.Visibility, null, tint = Indigo300)
-                                    }
-                                    IconButton(onClick = { isEditingPassword = true }) {
-                                        Icon(Icons.Default.Edit, null, tint = Indigo300)
-                                    }
-                                }
-                            }
-                        } else {
-                            OutlinedTextField(
-                                value = passwordText,
-                                onValueChange = { passwordText = it },
-                                label = { Text("Nueva Contraseña", color = TextGray400) },
-                                visualTransformation = PasswordVisualTransformation(),
-                                modifier = Modifier.fillMaxWidth(),
-                                singleLine = true,
-                                colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = Indigo500, unfocusedBorderColor = White10, focusedTextColor = Color.White, unfocusedTextColor = Color.White)
-                            )
+                        Column(modifier = Modifier.fillMaxWidth()) {
+                            Text("Seguridad", style = MaterialTheme.typography.labelLarge.copy(color = Indigo300, fontWeight = FontWeight.Bold))
                             Spacer(modifier = Modifier.height(12.dp))
-                            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                Button(onClick = { if (passwordText.length >= 6) { onUpdatePassword(passwordText); isEditingPassword = false; passwordText = "" } }, modifier = Modifier.weight(1f), colors = ButtonDefaults.buttonColors(containerColor = Indigo500)) { Text("Guardar") }
-                                TextButton(onClick = { isEditingPassword = false }, modifier = Modifier.weight(1f)) { Text("Cancelar", color = TextGray400) }
+
+                            if (!isEditingPassword) {
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .background(White10, RoundedCornerShape(12.dp))
+                                        .padding(16.dp),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Column(modifier = Modifier.weight(1f)) {
+                                        Text("Contraseña actual", style = MaterialTheme.typography.labelSmall, color = TextGray400)
+                                        Text(
+                                            text = if (showPassword) password.ifEmpty { "(No disponible)" } else "••••••••",
+                                            style = MaterialTheme.typography.bodyLarge,
+                                            color = Color.White
+                                        )
+                                    }
+                                    Row {
+                                        IconButton(onClick = { showPassword = !showPassword }) {
+                                            Icon(if (showPassword) Icons.Default.VisibilityOff else Icons.Default.Visibility, null, tint = Indigo300)
+                                        }
+                                        IconButton(onClick = { isEditingPassword = true }) {
+                                            Icon(Icons.Default.Edit, null, tint = Indigo300)
+                                        }
+                                    }
+                                }
+                            } else {
+                                OutlinedTextField(
+                                    value = passwordText,
+                                    onValueChange = { passwordText = it },
+                                    label = { Text("Nueva Contraseña", color = TextGray400) },
+                                    visualTransformation = PasswordVisualTransformation(),
+                                    modifier = Modifier.fillMaxWidth(),
+                                    singleLine = true,
+                                    colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = Indigo500, unfocusedBorderColor = White10, focusedTextColor = Color.White, unfocusedTextColor = Color.White)
+                                )
+                                Spacer(modifier = Modifier.height(12.dp))
+                                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                    Button(onClick = { if (passwordText.length >= 6) { onUpdatePassword(passwordText); isEditingPassword = false; passwordText = "" } }, modifier = Modifier.weight(1f), colors = ButtonDefaults.buttonColors(containerColor = Indigo500)) { Text("Guardar") }
+                                    TextButton(onClick = { isEditingPassword = false }, modifier = Modifier.weight(1f)) { Text("Cancelar", color = TextGray400) }
+                                }
                             }
                         }
                     }
                 }
-                Spacer(modifier = Modifier.height(32.dp)) // Espacio final para que el scroll respire
             }
         }
     }

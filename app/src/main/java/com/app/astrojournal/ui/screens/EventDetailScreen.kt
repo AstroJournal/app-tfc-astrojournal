@@ -2,12 +2,15 @@ package com.app.astrojournal.ui.screens
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
@@ -182,25 +185,28 @@ fun EventDetailScreen(
                 contentScale = ContentScale.Crop
             )
 
-            Column(
+            LazyColumn(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(innerPadding)
-                    .padding(horizontal = 20.dp)
-                    .testTag("event_detail_screen")
-                    .verticalScroll(scrollState)
+                    .testTag("event_detail_screen"),
+                contentPadding = PaddingValues(
+                    top = innerPadding.calculateTopPadding() + 24.dp,
+                    bottom = innerPadding.calculateBottomPadding() + 24.dp,
+                    start = 20.dp,
+                    end = 20.dp
+                ),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                Spacer(modifier = Modifier.height(24.dp))
+                item {
+                    EventDetailVisibilitySection(
+                        state = visibilityState,
+                        expanded = visibilityExpanded,
+                        onToggleExpanded = { visibilityExpanded = !visibilityExpanded }
+                    )
+                }
 
-                EventDetailVisibilitySection(
-                    state = visibilityState,
-                    expanded = visibilityExpanded,
-                    onToggleExpanded = { visibilityExpanded = !visibilityExpanded }
-                )
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                EventEditorCard(
+                item {
+                    EventEditorCard(
                         event = event,
                         localDateTime = event.date,
                         countdownText = getCountdownText(event.timestamp),
@@ -265,56 +271,55 @@ fun EventDetailScreen(
                         },
                         onMakeMeetupClick = { onNavigate("social?initialEventName=${event.name}") }
                     )
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                if (futureAgended.isNotEmpty()) {
-                    Spacer(modifier = Modifier.height(16.dp))
-                    AgendaListCard(
-                        title = "My Agenda",
-                        titleColor = Color(0xFF818CF8),
-                        items = futureAgended.sortedBy { it.eventId },
-                        onSelectEvent = { onEventSelected(it.toAstroEvent()) },
-                        onToggleObserved = { item, checked ->
-                            viewModel.saveFullEventState(
-                                eventId = item.eventId,
-                                eventName = item.eventName,
-                                date = item.observationDate,
-                                note = item.notes ?: "",
-                                agended = true,
-                                observed = checked
-                            )
-                        },
-                        onRemove = { eventToRemoveFromAgenda = it }
-                    )
                 }
 
-                if (pastAgended.isNotEmpty()) {
-                    Spacer(modifier = Modifier.height(16.dp))
-                    AgendaListCard(
-                        title = "Past Events",
-                        titleColor = Color(0xFF94A3B8), // Muted color
-                        items = pastAgended.sortedByDescending { it.eventId },
-                        onSelectEvent = { onEventSelected(it.toAstroEvent()) },
-                        onToggleObserved = { item, checked ->
-                            if (checked) {
-                                itemToMarkObserved = item
-                            } else {
+                if (futureAgended.isNotEmpty()) {
+                    item {
+                        AgendaListCard(
+                            title = "My Agenda",
+                            titleColor = Color(0xFF818CF8),
+                            items = futureAgended.sortedBy { it.eventId },
+                            onSelectEvent = { onEventSelected(it.toAstroEvent()) },
+                            onToggleObserved = { item, checked ->
                                 viewModel.saveFullEventState(
                                     eventId = item.eventId,
                                     eventName = item.eventName,
                                     date = item.observationDate,
                                     note = item.notes ?: "",
                                     agended = true,
-                                    observed = false
+                                    observed = checked
                                 )
-                            }
-                        },
-                        onRemove = { eventToRemoveFromAgenda = it }
-                    )
+                            },
+                            onRemove = { eventToRemoveFromAgenda = it }
+                        )
+                    }
                 }
 
-                Spacer(modifier = Modifier.height(24.dp))
+                if (pastAgended.isNotEmpty()) {
+                    item {
+                        AgendaListCard(
+                            title = "Past Events",
+                            titleColor = Color(0xFF94A3B8), // Muted color
+                            items = pastAgended.sortedByDescending { it.eventId },
+                            onSelectEvent = { onEventSelected(it.toAstroEvent()) },
+                            onToggleObserved = { item, checked ->
+                                if (checked) {
+                                    itemToMarkObserved = item
+                                } else {
+                                    viewModel.saveFullEventState(
+                                        eventId = item.eventId,
+                                        eventName = item.eventName,
+                                        date = item.observationDate,
+                                        note = item.notes ?: "",
+                                        agended = true,
+                                        observed = false
+                                    )
+                                }
+                            },
+                            onRemove = { eventToRemoveFromAgenda = it }
+                        )
+                    }
+                }
             }
         }
     }
