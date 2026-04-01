@@ -165,24 +165,20 @@ fun EventDetailScreen(
     Scaffold(
         topBar = { com.app.astrojournal.ui.components.AstroTopBar(onProfileClick = { onNavigate("profile") }) },
         bottomBar = { AstroBottomNavigation(currentScreen = currentScreen, onNavigate = onNavigate) },
-        containerColor = BackgroundDark,
+        containerColor = Color.Transparent,
         contentColor = Color.White
     ) { innerPadding ->
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(
-                    brush = Brush.verticalGradient(
-                        colors = listOf(BackgroundDark, BackgroundGradientEnd)
-                    )
-                )
-        ) {
+        Box(modifier = Modifier.fillMaxSize()) {
             Image(
                 painter = painterResource(id = R.drawable.stary_night_bg),
                 contentDescription = null,
-                modifier = Modifier
-                    .fillMaxSize()
-                    .alpha(0.6f),
+                modifier = Modifier.fillMaxSize(),
+                contentScale = ContentScale.Crop
+            )
+            Image(
+                painter = painterResource(id = getEventBackgroundImage(event.name)),
+                contentDescription = null,
+                modifier = Modifier.fillMaxSize().alpha(0.24f),
                 contentScale = ContentScale.Crop
             )
 
